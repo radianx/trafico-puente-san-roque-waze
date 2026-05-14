@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, render_template
 import WazeRouteCalculator
 import threading
 import time
@@ -72,6 +72,11 @@ def start_background_updater():
         # Iniciar el hilo en segundo plano
         updater_thread = threading.Thread(target=update_traffic_data, daemon=True)
         updater_thread.start()
+
+@app.route('/', methods=['GET'])
+def index():
+    """Ruta para el microfrontend en smartphone (render.com)"""
+    return render_template('index.html')
 
 @app.route('/api/trafico', methods=['GET'])
 def get_trafico():
