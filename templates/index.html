@@ -223,7 +223,7 @@
         function formatTime(isoString) {
             if (!isoString) return '--:--';
             const date = new Date(isoString);
-            return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' });
+            return date.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Argentina/Buenos_Aires' });
         }
 
         function extractMinutes(timeStr) {
