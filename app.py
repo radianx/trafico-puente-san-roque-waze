@@ -58,9 +58,16 @@ def update_traffic_data():
         # Dormir el hilo durante el intervalo configurado
         time.sleep(UPDATE_INTERVAL_SECONDS)
 
-# Iniciar el hilo en segundo plano (daemon=True asegura que muera si el servidor se apaga)
-updater_thread = threading.Thread(target=update_traffic_data, daemon=True)
-updater_thread.start()
+thread_started = False
+
+@app.before_request
+def start_background_updater():
+    global thread_started
+    if not thread_started:
+        thread_started = True
+        # Iniciar el hilo en segundo plano
+        updater_thread = threading.Thread(target=update_traffic_data, daemon=True)
+        updater_thread.start()
 
 @app.route('/api/trafico', methods=['GET'])
 def get_trafico():
