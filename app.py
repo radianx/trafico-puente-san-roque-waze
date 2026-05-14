@@ -35,11 +35,15 @@ def update_traffic_data():
             
             # Consultar Posadas -> Encarnación
             route_ida = WazeRouteCalculator.WazeRouteCalculator(POSADAS_COORDS, ENCARNACION_COORDS, REGION)
-            tiempo_ida, _ = route_ida.calc_route_info(real_time=True)
+            tiempo_ida_raw, _ = route_ida.calc_route_info(real_time=True)
             
             # Consultar Encarnación -> Posadas
             route_vuelta = WazeRouteCalculator.WazeRouteCalculator(ENCARNACION_COORDS, POSADAS_COORDS, REGION)
-            tiempo_vuelta, _ = route_vuelta.calc_route_info(real_time=True)
+            tiempo_vuelta_raw, _ = route_vuelta.calc_route_info(real_time=True)
+            
+            # Ajuste del 25% extra (Waze suele subestimar vs Google Maps)
+            tiempo_ida = tiempo_ida_raw * 1.25
+            tiempo_vuelta = tiempo_vuelta_raw * 1.25
             
             # Actualizar Caché Global
             trafico_cache["ida_encarnacion"] = f"{tiempo_ida:.0f}min"
