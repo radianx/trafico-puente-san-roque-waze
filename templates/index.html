@@ -268,6 +268,83 @@
             display: none;
         }
 
+        /* Bridge image viewer */
+        .bridge-viewer {
+            position: relative;
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 1.5rem;
+            aspect-ratio: 16 / 10;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: box-shadow 0.8s ease;
+        }
+
+        .bridge-viewer.glow-agil {
+            box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.3), inset 0 0 20px -5px rgba(16, 185, 129, 0.1);
+        }
+        .bridge-viewer.glow-moderado {
+            box-shadow: 0 0 20px -5px rgba(234, 179, 8, 0.3), inset 0 0 20px -5px rgba(234, 179, 8, 0.1);
+        }
+        .bridge-viewer.glow-cargado {
+            box-shadow: 0 0 20px -5px rgba(249, 115, 22, 0.3), inset 0 0 20px -5px rgba(249, 115, 22, 0.1);
+        }
+        .bridge-viewer.glow-colapsado {
+            box-shadow: 0 0 25px -5px rgba(239, 68, 68, 0.4), inset 0 0 20px -5px rgba(239, 68, 68, 0.15);
+        }
+
+        .bridge-img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+
+        .bridge-img.active {
+            opacity: 1;
+        }
+
+        .bridge-viewer-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 0.6rem 0.8rem;
+            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+
+        .bridge-viewer-label {
+            font-size: 0.65rem;
+            color: rgba(255, 255, 255, 0.5);
+            font-style: italic;
+            line-height: 1.3;
+        }
+
+        .bridge-viewer-skeleton {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bridge-viewer-skeleton svg {
+            opacity: 0.15;
+        }
+
     </style>
 </head>
 <body>
@@ -296,6 +373,24 @@
             </div>
             <div class="route-time" id="time-vuelta">
                 <div class="skeleton"></div>
+            </div>
+        </div>
+
+        <!-- Dynamic bridge image viewer -->
+        <div class="bridge-viewer" id="bridge-viewer">
+            <div class="bridge-viewer-skeleton" id="bridge-skeleton">
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2" />
+                    <circle cx="8.5" cy="8.5" r="1.5" />
+                    <path d="m21 15-5-5L5 21" />
+                </svg>
+            </div>
+            <img class="bridge-img" id="img-agil" src="/static/images/puente-agil.webp" alt="Puente ágil">
+            <img class="bridge-img" id="img-moderado" src="/static/images/puente-moderado.webp" alt="Puente moderado">
+            <img class="bridge-img" id="img-cargado" src="/static/images/puente-cargado.webp" alt="Puente cargado">
+            <img class="bridge-img" id="img-colapsado" src="/static/images/puente-colapsado.webp" alt="Puente colapsado">
+            <div class="bridge-viewer-overlay">
+                <span class="bridge-viewer-label">Imagen representativa · No refleja el estado actual</span>
             </div>
         </div>
         
@@ -331,12 +426,14 @@
         }
 
         function getCongestionLevel(minutes) {
-            if (minutes === null || isNaN(minutes)) return { level: '', label: '', emoji: '' };
-            if (minutes <= 30) return { level: 'level-agil', label: 'Ágil', emoji: '🟢' };
-            if (minutes <= 60) return { level: 'level-moderado', label: 'Moderado', emoji: '🟡' };
-            if (minutes <= 90) return { level: 'level-cargado', label: 'Cargado', emoji: '🟠' };
-            return { level: 'level-colapsado', label: 'Colapsado', emoji: '🔴' };
+            if (minutes === null || isNaN(minutes)) return { level: '', label: '', emoji: '', key: '' };
+            if (minutes <= 30) return { level: 'level-agil', label: 'Ágil', emoji: '🟢', key: 'agil' };
+            if (minutes <= 60) return { level: 'level-moderado', label: 'Moderado', emoji: '🟡', key: 'moderado' };
+            if (minutes <= 90) return { level: 'level-cargado', label: 'Cargado', emoji: '🟠', key: 'cargado' };
+            return { level: 'level-colapsado', label: 'Colapsado', emoji: '🔴', key: 'colapsado' };
         }
+
+        const congestionOrder = ['agil', 'moderado', 'cargado', 'colapsado'];
 
         function applyCongestion(cardId, badgeId, minutes) {
             const card = document.getElementById(cardId);
@@ -347,6 +444,32 @@
             card.className = 'route-card' + (level ? ' ' + level : '');
             badge.className = 'congestion-badge' + (level ? ' ' + level : '');
             badge.textContent = level ? `${emoji} ${label}` : '';
+        }
+
+        function updateBridgeImage(minsIda, minsVuelta) {
+            const levelIda = getCongestionLevel(minsIda);
+            const levelVuelta = getCongestionLevel(minsVuelta);
+
+            // Pick the worst congestion level between both routes
+            const idxIda = congestionOrder.indexOf(levelIda.key);
+            const idxVuelta = congestionOrder.indexOf(levelVuelta.key);
+            const worstKey = idxIda >= idxVuelta ? levelIda.key : levelVuelta.key;
+
+            if (!worstKey) return;
+
+            // Hide skeleton
+            const skeleton = document.getElementById('bridge-skeleton');
+            if (skeleton) skeleton.style.display = 'none';
+
+            // Crossfade images
+            const allImgs = document.querySelectorAll('.bridge-img');
+            allImgs.forEach(img => img.classList.remove('active'));
+            const target = document.getElementById('img-' + worstKey);
+            if (target) target.classList.add('active');
+
+            // Update glow
+            const viewer = document.getElementById('bridge-viewer');
+            viewer.className = 'bridge-viewer glow-' + worstKey;
         }
 
         async function fetchTrafficData() {
@@ -380,6 +503,7 @@
                     // Apply congestion visual cues
                     applyCongestion('card-ida', 'badge-ida', minsIda);
                     applyCongestion('card-vuelta', 'badge-vuelta', minsVuelta);
+                    updateBridgeImage(minsIda, minsVuelta);
                 } else {
                     statusDot.className = 'status-dot error';
                     statusText.textContent = 'Error';
