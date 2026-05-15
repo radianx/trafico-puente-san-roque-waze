@@ -113,6 +113,38 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+            border-left: 4px solid transparent;
+            transition: border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+
+        /* Congestion level colors */
+        .route-card.level-agil {
+            border-left-color: #10b981;
+            box-shadow: inset 4px 0 12px -4px rgba(16, 185, 129, 0.15);
+        }
+        .route-card.level-moderado {
+            border-left-color: #eab308;
+            box-shadow: inset 4px 0 12px -4px rgba(234, 179, 8, 0.15);
+        }
+        .route-card.level-cargado {
+            border-left-color: #f97316;
+            box-shadow: inset 4px 0 12px -4px rgba(249, 115, 22, 0.15);
+        }
+        .route-card.level-colapsado {
+            border-left-color: #ef4444;
+            box-shadow: inset 4px 0 12px -4px rgba(239, 68, 68, 0.2);
+            animation: pulse-red 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { box-shadow: inset 4px 0 12px -4px rgba(239, 68, 68, 0.2); }
+            50% { box-shadow: inset 4px 0 20px -4px rgba(239, 68, 68, 0.45); }
+        }
+
+        .route-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .route-name {
@@ -121,6 +153,48 @@
             font-weight: 500;
             text-transform: uppercase;
             letter-spacing: 1px;
+        }
+
+        .congestion-badge {
+            font-size: 0.7rem;
+            font-weight: 600;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            display: none;
+            transition: all 0.4s ease;
+        }
+
+        .congestion-badge.level-agil {
+            display: inline-block;
+            background: rgba(16, 185, 129, 0.15);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        .congestion-badge.level-moderado {
+            display: inline-block;
+            background: rgba(234, 179, 8, 0.15);
+            color: #facc15;
+            border: 1px solid rgba(234, 179, 8, 0.3);
+        }
+        .congestion-badge.level-cargado {
+            display: inline-block;
+            background: rgba(249, 115, 22, 0.15);
+            color: #fb923c;
+            border: 1px solid rgba(249, 115, 22, 0.3);
+        }
+        .congestion-badge.level-colapsado {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            animation: badge-pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes badge-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
         }
 
         .route-time {
@@ -205,15 +279,21 @@
     <div class="widget-container">
         <h1>Tráfico en el Puente</h1>
         
-        <div class="route-card">
-            <div class="route-name">Posadas ➔ Encarnación</div>
+        <div class="route-card" id="card-ida">
+            <div class="route-header">
+                <div class="route-name">Posadas ➔ Encarnación</div>
+                <span class="congestion-badge" id="badge-ida"></span>
+            </div>
             <div class="route-time" id="time-ida">
                 <div class="skeleton"></div>
             </div>
         </div>
 
-        <div class="route-card">
-            <div class="route-name">Encarnación ➔ Posadas</div>
+        <div class="route-card" id="card-vuelta">
+            <div class="route-header">
+                <div class="route-name">Encarnación ➔ Posadas</div>
+                <span class="congestion-badge" id="badge-vuelta"></span>
+            </div>
             <div class="route-time" id="time-vuelta">
                 <div class="skeleton"></div>
             </div>
@@ -247,7 +327,26 @@
 
         function extractMinutes(timeStr) {
             if (!timeStr) return null;
-            return timeStr.replace('min', '');
+            return parseInt(timeStr.replace('min', ''), 10);
+        }
+
+        function getCongestionLevel(minutes) {
+            if (minutes === null || isNaN(minutes)) return { level: '', label: '', emoji: '' };
+            if (minutes <= 30) return { level: 'level-agil', label: 'Ágil', emoji: '🟢' };
+            if (minutes <= 60) return { level: 'level-moderado', label: 'Moderado', emoji: '🟡' };
+            if (minutes <= 90) return { level: 'level-cargado', label: 'Cargado', emoji: '🟠' };
+            return { level: 'level-colapsado', label: 'Colapsado', emoji: '🔴' };
+        }
+
+        function applyCongestion(cardId, badgeId, minutes) {
+            const card = document.getElementById(cardId);
+            const badge = document.getElementById(badgeId);
+            const { level, label, emoji } = getCongestionLevel(minutes);
+
+            // Remove previous level classes
+            card.className = 'route-card' + (level ? ' ' + level : '');
+            badge.className = 'congestion-badge' + (level ? ' ' + level : '');
+            badge.textContent = level ? `${emoji} ${label}` : '';
         }
 
         async function fetchTrafficData() {
@@ -270,10 +369,17 @@
                     statusDot.className = 'status-dot success';
                     statusText.textContent = 'En vivo';
                     
-                    timeIda.innerHTML = `${extractMinutes(data.ida_encarnacion)}<span>min</span>`;
-                    timeVuelta.innerHTML = `${extractMinutes(data.vuelta_posadas)}<span>min</span>`;
+                    const minsIda = extractMinutes(data.ida_encarnacion);
+                    const minsVuelta = extractMinutes(data.vuelta_posadas);
+
+                    timeIda.innerHTML = `${minsIda}<span>min</span>`;
+                    timeVuelta.innerHTML = `${minsVuelta}<span>min</span>`;
                     lastUpdate.textContent = `Actualizado: ${formatRelativeTime(data.timestamp)}`;
                     errorBox.style.display = 'none';
+
+                    // Apply congestion visual cues
+                    applyCongestion('card-ida', 'badge-ida', minsIda);
+                    applyCongestion('card-vuelta', 'badge-vuelta', minsVuelta);
                 } else {
                     statusDot.className = 'status-dot error';
                     statusText.textContent = 'Error';
