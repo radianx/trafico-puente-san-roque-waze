@@ -3,7 +3,7 @@ import WazeRouteCalculator
 import threading
 import time
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Desactivar logs innecesarios de la librería de Waze
 logging.getLogger("WazeRouteCalculator.WazeRouteCalculator").setLevel(logging.WARNING)
@@ -48,7 +48,7 @@ def update_traffic_data():
             # Actualizar Caché Global
             trafico_cache["ida_encarnacion"] = f"{tiempo_ida:.0f}min"
             trafico_cache["vuelta_posadas"] = f"{tiempo_vuelta:.0f}min"
-            trafico_cache["timestamp"] = datetime.now().isoformat()
+            trafico_cache["timestamp"] = datetime.now(timezone.utc).isoformat()
             trafico_cache["status"] = "success"
             trafico_cache["error_message"] = None
             
