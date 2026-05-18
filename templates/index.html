@@ -1,529 +1,198 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tráfico Puente Posadas - Encarnación</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
-            --text-color: #ffffff;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
-        body {
-            font-family: 'Outfit', sans-serif;
-            min-height: 100vh;
-            min-height: 100dvh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #0f172a;
-            background-image: 
-                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
-                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
-            color: var(--text-color);
-            padding: 1.5rem;
-        }
-        
-        .background-orbs {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: 0;
-            pointer-events: none;
-        }
-
-        /* Ambient floating orbs for dynamic background */
-        .orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            z-index: 0;
-            animation: float 10s infinite ease-in-out alternate;
-        }
-        .orb-1 {
-            width: 300px;
-            height: 300px;
-            background: rgba(102, 126, 234, 0.4);
-            top: 10%;
-            left: 10%;
-        }
-        .orb-2 {
-            width: 400px;
-            height: 400px;
-            background: rgba(118, 75, 162, 0.4);
-            bottom: -10%;
-            right: -10%;
-            animation-delay: -5s;
-        }
-
-        @keyframes float {
-            0% { transform: translateY(0) scale(1); }
-            100% { transform: translateY(-50px) scale(1.1); }
-        }
-
-        .widget-container {
-            position: relative;
-            z-index: 1;
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid var(--glass-border);
-            border-radius: 24px;
-            padding: 2rem;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-            transition: transform 0.3s ease;
-        }
-
-        .widget-container:hover {
-            transform: translateY(-5px);
-        }
-
-        h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 2rem;
-            background: linear-gradient(to right, #fff, #cbd5e1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .route-card {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 16px;
-            padding: 1.5rem;
-            margin-bottom: 1.5rem;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            border-left: 4px solid transparent;
-            transition: border-color 0.5s ease, box-shadow 0.5s ease;
-        }
-
-        /* Congestion level colors */
-        .route-card.level-agil {
-            border-left-color: #10b981;
-            box-shadow: inset 4px 0 12px -4px rgba(16, 185, 129, 0.15);
-        }
-        .route-card.level-moderado {
-            border-left-color: #eab308;
-            box-shadow: inset 4px 0 12px -4px rgba(234, 179, 8, 0.15);
-        }
-        .route-card.level-cargado {
-            border-left-color: #f97316;
-            box-shadow: inset 4px 0 12px -4px rgba(249, 115, 22, 0.15);
-        }
-        .route-card.level-colapsado {
-            border-left-color: #ef4444;
-            box-shadow: inset 4px 0 12px -4px rgba(239, 68, 68, 0.2);
-            animation: pulse-red 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse-red {
-            0%, 100% { box-shadow: inset 4px 0 12px -4px rgba(239, 68, 68, 0.2); }
-            50% { box-shadow: inset 4px 0 20px -4px rgba(239, 68, 68, 0.45); }
-        }
-
-        .route-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .route-name {
-            font-size: 0.9rem;
-            color: #94a3b8;
-            font-weight: 500;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .congestion-badge {
-            font-size: 0.7rem;
-            font-weight: 600;
-            padding: 0.2rem 0.6rem;
-            border-radius: 999px;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-            display: none;
-            transition: all 0.4s ease;
-        }
-
-        .congestion-badge.level-agil {
-            display: inline-block;
-            background: rgba(16, 185, 129, 0.15);
-            color: #34d399;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-        .congestion-badge.level-moderado {
-            display: inline-block;
-            background: rgba(234, 179, 8, 0.15);
-            color: #facc15;
-            border: 1px solid rgba(234, 179, 8, 0.3);
-        }
-        .congestion-badge.level-cargado {
-            display: inline-block;
-            background: rgba(249, 115, 22, 0.15);
-            color: #fb923c;
-            border: 1px solid rgba(249, 115, 22, 0.3);
-        }
-        .congestion-badge.level-colapsado {
-            display: inline-block;
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            animation: badge-pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes badge-pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.6; }
-        }
-
-        .route-time {
-            font-size: 3rem;
-            font-weight: 700;
-            color: #fff;
-            display: flex;
-            align-items: baseline;
-            gap: 0.5rem;
-        }
-
-        .route-time span {
-            font-size: 1rem;
-            color: #cbd5e1;
-            font-weight: 300;
-        }
-
-        .status-footer {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-top: 2rem;
-            font-size: 0.8rem;
-            color: #94a3b8;
-        }
-
-        .status-dot {
-            display: inline-block;
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            margin-right: 6px;
-        }
-
-        .status-dot.success { background-color: #10b981; box-shadow: 0 0 10px #10b981; }
-        .status-dot.error { background-color: #ef4444; box-shadow: 0 0 10px #ef4444; }
-        .status-dot.initializing { background-color: #f59e0b; box-shadow: 0 0 10px #f59e0b; }
-
-        .loader {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .skeleton {
-            background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.05) 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: 8px;
-            height: 48px;
-            width: 70%;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        .error-message {
-            color: #ef4444;
-            font-size: 0.85rem;
-            margin-top: 0.5rem;
-            display: none;
-        }
-
-        /* Bridge image viewer */
-        .bridge-viewer {
-            position: relative;
-            border-radius: 16px;
-            overflow: hidden;
-            margin-bottom: 1.5rem;
-            aspect-ratio: 16 / 10;
-            background: rgba(0, 0, 0, 0.3);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: box-shadow 0.8s ease;
-        }
-
-        .bridge-viewer.glow-agil {
-            box-shadow: 0 0 20px -5px rgba(16, 185, 129, 0.3), inset 0 0 20px -5px rgba(16, 185, 129, 0.1);
-        }
-        .bridge-viewer.glow-moderado {
-            box-shadow: 0 0 20px -5px rgba(234, 179, 8, 0.3), inset 0 0 20px -5px rgba(234, 179, 8, 0.1);
-        }
-        .bridge-viewer.glow-cargado {
-            box-shadow: 0 0 20px -5px rgba(249, 115, 22, 0.3), inset 0 0 20px -5px rgba(249, 115, 22, 0.1);
-        }
-        .bridge-viewer.glow-colapsado {
-            box-shadow: 0 0 25px -5px rgba(239, 68, 68, 0.4), inset 0 0 20px -5px rgba(239, 68, 68, 0.15);
-        }
-
-        .bridge-img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            opacity: 0;
-            transition: opacity 0.8s ease;
-        }
-
-        .bridge-img.active {
-            opacity: 1;
-        }
-
-        .bridge-viewer-overlay {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            padding: 0.6rem 0.8rem;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.7));
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-        }
-
-        .bridge-viewer-label {
-            font-size: 0.65rem;
-            color: rgba(255, 255, 255, 0.5);
-            font-style: italic;
-            line-height: 1.3;
-        }
-
-        .bridge-viewer-skeleton {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, rgba(255,255,255,0.03) 25%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0.03) 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .bridge-viewer-skeleton svg {
-            opacity: 0.15;
-        }
-
-    </style>
+    <title>Tráfico Puente Posadas - Encarnación | Estado en Tiempo Real</title>
+    <meta name="description"
+        content="Estado del tráfico en tiempo real del Puente San Roque González. Tiempos de cruce Posadas-Encarnación, clima, horarios del tren y más.">
+    <meta property="og:title" content="Puente Posadas-Encarnación en Vivo">
+    <meta property="og:description"
+        content="Consultá el tiempo de cruce del puente, clima y horarios del tren internacional.">
+    <meta property="og:type" content="website">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
 </head>
+
 <body>
     <div class="background-orbs">
         <div class="orb orb-1"></div>
         <div class="orb orb-2"></div>
     </div>
 
-    <div class="widget-container">
-        <h1>Tráfico en el Puente</h1>
-        
-        <div class="route-card" id="card-ida">
-            <div class="route-header">
-                <div class="route-name">Posadas ➔ Encarnación</div>
-                <span class="congestion-badge" id="badge-ida"></span>
+    <div class="app">
+        <header class="header">
+            <h1>Puente San Roque González</h1>
+            <div class="subtitle">Posadas 🇦🇷 ↔ Encarnación 🇵🇾</div>
+        </header>
+
+        <!-- Quick Info Bar: Clocks + Train Status -->
+        <div class="quick-bar">
+            <div class="qb-item" id="clock-bar">🕐 <span id="clock-text">--:--</span></div>
+            <div class="qb-item" id="train-bar"><span class="qb-dot off" id="train-dot"></span>🚂 <span
+                    id="train-status">Cargando...</span></div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <nav class="tab-nav" role="tablist">
+            <button class="tab-btn active" data-tab="trafico" role="tab" aria-selected="true" id="btn-trafico">🚗
+                Tráfico</button>
+            <button class="tab-btn" data-tab="clima" role="tab" aria-selected="false" id="btn-clima">🌤️ Clima</button>
+            <button class="tab-btn" data-tab="info" role="tab" aria-selected="false" id="btn-info">ℹ️ Info</button>
+        </nav>
+
+        <!-- TAB: Tráfico -->
+        <div class="tab-content">
+            <div class="tab-pane active" id="tab-trafico" role="tabpanel">
+                <div class="route-card" id="card-ida">
+                    <div class="route-header">
+                        <div class="route-name">Posadas ➔ Encarnación</div>
+                        <span class="congestion-badge" id="badge-ida"></span>
+                    </div>
+                    <div class="route-time" id="time-ida">
+                        <div class="skeleton"></div>
+                    </div>
+                </div>
+                <div class="route-card" id="card-vuelta">
+                    <div class="route-header">
+                        <div class="route-name">Encarnación ➔ Posadas</div>
+                        <span class="congestion-badge" id="badge-vuelta"></span>
+                    </div>
+                    <div class="route-time" id="time-vuelta">
+                        <div class="skeleton"></div>
+                    </div>
+                </div>
+                <div class="bridge-viewer" id="bridge-viewer">
+                    <div class="bridge-viewer-skeleton" id="bridge-skeleton">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <path d="m21 15-5-5L5 21" />
+                        </svg>
+                    </div>
+                    <img class="bridge-img" id="img-agil" src="/static/images/puente-agil.webp" alt="Puente ágil">
+                    <img class="bridge-img" id="img-moderado" src="/static/images/puente-moderado.webp"
+                        alt="Puente moderado">
+                    <img class="bridge-img" id="img-cargado" src="/static/images/puente-cargado.webp"
+                        alt="Puente cargado">
+                    <img class="bridge-img" id="img-colapsado" src="/static/images/puente-colapsado.webp"
+                        alt="Puente colapsado">
+                    <div class="bridge-viewer-overlay"><span class="bridge-viewer-label">Imagen representativa · No
+                            refleja el estado actual</span></div>
+                </div>
+                <div class="error-message" id="error-box"></div>
             </div>
-            <div class="route-time" id="time-ida">
-                <div class="skeleton"></div>
+
+            <!-- TAB: Clima -->
+            <div class="tab-pane" id="tab-clima" role="tabpanel">
+                <div class="weather-current" id="weather-current">
+                    <div class="weather-icon" id="w-icon">⏳</div>
+                    <div class="weather-temp" id="w-temp">--°</div>
+                    <div class="weather-desc" id="w-desc">Cargando clima...</div>
+                    <div class="weather-details">
+                        <div class="wd-item"><span>Sensación</span><span class="wd-val" id="w-feels">--°</span></div>
+                        <div class="wd-item"><span>Humedad</span><span class="wd-val" id="w-humidity">--%</span></div>
+                        <div class="wd-item"><span>Viento</span><span class="wd-val" id="w-wind">-- km/h</span></div>
+                    </div>
+                </div>
+                <div class="forecast-title">Pronóstico 7 días</div>
+                <div class="forecast-grid" id="forecast-grid"></div>
+            </div>
+
+            <!-- TAB: Info -->
+            <div class="tab-pane" id="tab-info" role="tabpanel">
+                <div class="info-card">
+                    <h3>🚂 Tren Internacional</h3>
+                    <div class="schedule-grid">
+                        <div class="schedule-item">
+                            <div class="si-label">Desde Posadas</div>
+                            <div class="si-value">07:15 — 18:15</div>
+                        </div>
+                        <div class="schedule-item">
+                            <div class="si-label">Desde Encarnación</div>
+                            <div class="si-value">07:00 — 18:30</div>
+                        </div>
+                        <div class="schedule-item">
+                            <div class="si-label">Frecuencia</div>
+                            <div class="si-value">15-30 min</div>
+                        </div>
+                        <div class="schedule-item">
+                            <div class="si-label">Duración</div>
+                            <div class="si-value">~8 min</div>
+                        </div>
+                    </div>
+                    <p class="schedule-note">🗓️ Lunes a viernes. No opera fines de semana ni feriados nacionales.<br>🛂
+                        Control migratorio unificado en estación Posadas.<br>🎫 Pasajes se abonan en estación.</p>
+                </div>
+                <div class="info-card">
+                    <h3>💱 Conversor de Moneda</h3>
+                    <div class="converter">
+                        <div class="conv-row">
+                            <input type="number" id="conv-amount" value="100" class="conv-input" min="0">
+                            <select id="conv-from" class="conv-select">
+                                <option value="USD">USD (Dólar Blue)</option>
+                                <option value="ARS">ARS (Peso Arg)</option>
+                                <option value="PYG">PYG (Guaraní)</option>
+                            </select>
+                        </div>
+                        <div class="conv-row">
+                            <div class="conv-result" id="conv-result">--</div>
+                            <select id="conv-to" class="conv-select">
+                                <option value="ARS">ARS (Peso Arg)</option>
+                                <option value="PYG" selected>PYG (Guaraní)</option>
+                                <option value="USD">USD (Dólar Blue)</option>
+                            </select>
+                        </div>
+                        <p class="schedule-note" id="conv-rates">Obteniendo cotizaciones...</p>
+                    </div>
+                </div>
+                <div class="info-card">
+                    <h3>🏛️ Links Útiles</h3>
+                    <div class="links-group">
+                        <h4>Gobierno y Migraciones</h4>
+                        <a href="https://www.argentina.gob.ar/interior/migraciones" target="_blank"
+                            rel="noopener">Migraciones Argentina</a>
+                        <a href="https://www.migraciones.gov.py" target="_blank" rel="noopener">Migraciones Paraguay</a>
+                        <a href="https://www.argentina.gob.ar/seguridad/pasosinternacionales" target="_blank"
+                            rel="noopener">Pasos Internacionales (estado oficial)</a>
+                        <a href="https://www.afip.gob.ar" target="_blank" rel="noopener">Aduana Argentina (AFIP)</a>
+                        <a href="https://www.aduana.gov.py" target="_blank" rel="noopener">Aduanas Paraguay (DNA)</a>
+                    </div>
+                    <div class="links-group">
+                        <h4>Medios Locales</h4>
+                        <a href="https://www.elterritorio.com.ar" target="_blank" rel="noopener">El Territorio</a>
+                        <a href="https://www.primeraedicion.com.ar" target="_blank" rel="noopener">Primera Edición</a>
+                        <a href="https://www.abc.com.py" target="_blank" rel="noopener">ABC Color (Paraguay)</a>
+                        <a href="https://www.ultimahora.com" target="_blank" rel="noopener">Última Hora (Paraguay)</a>
+                    </div>
+                    <div class="links-group">
+                        <h4>Otras Herramientas</h4>
+                        <a href="https://www.argentina.gob.ar/transporte/trenes-argentinos" target="_blank"
+                            rel="noopener">Trenes Argentinos (info oficial)</a>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="route-card" id="card-vuelta">
-            <div class="route-header">
-                <div class="route-name">Encarnación ➔ Posadas</div>
-                <span class="congestion-badge" id="badge-vuelta"></span>
-            </div>
-            <div class="route-time" id="time-vuelta">
-                <div class="skeleton"></div>
-            </div>
-        </div>
+        <!-- Ad Placeholder -->
+        <div class="ad-space" id="ad-container">📢 Espacio publicitario — <a href="mailto:sbardemadrian@gmail.com"
+                style="color:var(--blue)">Anunciá aquí</a></div>
 
-        <!-- Dynamic bridge image viewer -->
-        <div class="bridge-viewer" id="bridge-viewer">
-            <div class="bridge-viewer-skeleton" id="bridge-skeleton">
-                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5">
-                    <rect x="3" y="3" width="18" height="18" rx="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <path d="m21 15-5-5L5 21" />
-                </svg>
-            </div>
-            <img class="bridge-img" id="img-agil" src="/static/images/puente-agil.webp" alt="Puente ágil">
-            <img class="bridge-img" id="img-moderado" src="/static/images/puente-moderado.webp" alt="Puente moderado">
-            <img class="bridge-img" id="img-cargado" src="/static/images/puente-cargado.webp" alt="Puente cargado">
-            <img class="bridge-img" id="img-colapsado" src="/static/images/puente-colapsado.webp" alt="Puente colapsado">
-            <div class="bridge-viewer-overlay">
-                <span class="bridge-viewer-label">Imagen representativa · No refleja el estado actual</span>
-            </div>
-        </div>
-        
-        <div class="error-message" id="error-box"></div>
-
+        <!-- Status Footer -->
         <div class="status-footer">
-            <div class="status-indicator">
-                <span class="status-dot initializing" id="status-dot"></span>
-                <span id="status-text">Conectando...</span>
-            </div>
-            <div class="last-update" id="last-update">
-                --:--
-            </div>
+            <div><span class="status-dot initializing" id="status-dot"></span><span
+                    id="status-text">Conectando...</span></div>
+            <div id="last-update">--:--</div>
         </div>
+        <div class="attribution">Tráfico: <a href="https://www.waze.com" target="_blank" rel="noopener">Waze</a> ·
+            Clima: <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo</a> (CC BY 4.0) - Hecho
+            por Adrián Sbardella | <a href="mailto:sbardemadrian@gmail.com">E-Mail</a></div>
     </div>
 
-    <script>
-        function formatRelativeTime(isoString) {
-            if (!isoString) return '--:--';
-            const date = new Date(isoString);
-            const now = new Date();
-            const diffMs = now - date;
-            const diffMins = Math.floor(diffMs / 60000);
-            
-            if (diffMins < 1) return 'hace instantes';
-            if (diffMins === 1) return 'hace 1 min';
-            return `hace ${diffMins} min`;
-        }
-
-        function extractMinutes(timeStr) {
-            if (!timeStr) return null;
-            return parseInt(timeStr.replace('min', ''), 10);
-        }
-
-        function getCongestionLevel(minutes) {
-            if (minutes === null || isNaN(minutes)) return { level: '', label: '', emoji: '', key: '' };
-            if (minutes <= 30) return { level: 'level-agil', label: 'Ágil', emoji: '🟢', key: 'agil' };
-            if (minutes <= 60) return { level: 'level-moderado', label: 'Moderado', emoji: '🟡', key: 'moderado' };
-            if (minutes <= 90) return { level: 'level-cargado', label: 'Cargado', emoji: '🟠', key: 'cargado' };
-            return { level: 'level-colapsado', label: 'Colapsado', emoji: '🔴', key: 'colapsado' };
-        }
-
-        const congestionOrder = ['agil', 'moderado', 'cargado', 'colapsado'];
-
-        function applyCongestion(cardId, badgeId, minutes) {
-            const card = document.getElementById(cardId);
-            const badge = document.getElementById(badgeId);
-            const { level, label, emoji } = getCongestionLevel(minutes);
-
-            // Remove previous level classes
-            card.className = 'route-card' + (level ? ' ' + level : '');
-            badge.className = 'congestion-badge' + (level ? ' ' + level : '');
-            badge.textContent = level ? `${emoji} ${label}` : '';
-        }
-
-        function updateBridgeImage(minsIda, minsVuelta) {
-            const levelIda = getCongestionLevel(minsIda);
-            const levelVuelta = getCongestionLevel(minsVuelta);
-
-            // Pick the worst congestion level between both routes
-            const idxIda = congestionOrder.indexOf(levelIda.key);
-            const idxVuelta = congestionOrder.indexOf(levelVuelta.key);
-            const worstKey = idxIda >= idxVuelta ? levelIda.key : levelVuelta.key;
-
-            if (!worstKey) return;
-
-            // Hide skeleton
-            const skeleton = document.getElementById('bridge-skeleton');
-            if (skeleton) skeleton.style.display = 'none';
-
-            // Crossfade images
-            const allImgs = document.querySelectorAll('.bridge-img');
-            allImgs.forEach(img => img.classList.remove('active'));
-            const target = document.getElementById('img-' + worstKey);
-            if (target) target.classList.add('active');
-
-            // Update glow
-            const viewer = document.getElementById('bridge-viewer');
-            viewer.className = 'bridge-viewer glow-' + worstKey;
-        }
-
-        async function fetchTrafficData() {
-            try {
-                const response = await fetch('/api/trafico');
-                if (!response.ok) throw new Error('Error en la red');
-                const data = await response.json();
-                
-                const timeIda = document.getElementById('time-ida');
-                const timeVuelta = document.getElementById('time-vuelta');
-                const statusDot = document.getElementById('status-dot');
-                const statusText = document.getElementById('status-text');
-                const lastUpdate = document.getElementById('last-update');
-                const errorBox = document.getElementById('error-box');
-
-                if (data.status === 'initializing') {
-                    statusDot.className = 'status-dot initializing';
-                    statusText.textContent = 'Calculando...';
-                } else if (data.status === 'success') {
-                    statusDot.className = 'status-dot success';
-                    statusText.textContent = 'En vivo';
-                    
-                    const minsIda = extractMinutes(data.ida_encarnacion);
-                    const minsVuelta = extractMinutes(data.vuelta_posadas);
-
-                    timeIda.innerHTML = `${minsIda}<span>min</span>`;
-                    timeVuelta.innerHTML = `${minsVuelta}<span>min</span>`;
-                    lastUpdate.textContent = `Actualizado: ${formatRelativeTime(data.timestamp)}`;
-                    errorBox.style.display = 'none';
-
-                    // Apply congestion visual cues
-                    applyCongestion('card-ida', 'badge-ida', minsIda);
-                    applyCongestion('card-vuelta', 'badge-vuelta', minsVuelta);
-                    updateBridgeImage(minsIda, minsVuelta);
-                } else {
-                    statusDot.className = 'status-dot error';
-                    statusText.textContent = 'Error';
-                    errorBox.textContent = data.error_message || 'No se pudo obtener la información.';
-                    errorBox.style.display = 'block';
-                }
-
-            } catch (error) {
-                console.error("Fetch error:", error);
-                const statusDot = document.getElementById('status-dot');
-                const statusText = document.getElementById('status-text');
-                
-                statusDot.className = 'status-dot error';
-                statusText.textContent = 'Desconectado';
-            }
-        }
-
-        // Fetch immediately and then every 30 seconds
-        fetchTrafficData();
-        setInterval(fetchTrafficData, 30000);
-    </script>
+    <script src="/static/js/app.js"></script>
 </body>
+
 </html>

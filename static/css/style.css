@@ -1,0 +1,163 @@
+:root {
+    --glass-bg: rgba(255,255,255,0.07);
+    --glass-border: rgba(255,255,255,0.12);
+    --text: #ffffff;
+    --text-muted: #94a3b8;
+    --text-dim: #64748b;
+    --green: #10b981; --green-bg: rgba(16,185,129,0.15);
+    --yellow: #eab308; --yellow-bg: rgba(234,179,8,0.15);
+    --orange: #f97316; --orange-bg: rgba(249,115,22,0.15);
+    --red: #ef4444; --red-bg: rgba(239,68,68,0.15);
+    --blue: #667eea;
+    --card-bg: rgba(0,0,0,0.2);
+    --card-border: rgba(255,255,255,0.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+    font-family:'Outfit',sans-serif;
+    min-height:100vh;min-height:100dvh;
+    display:flex;flex-direction:column;align-items:center;
+    background:#0f172a;
+    background-image:
+        radial-gradient(at 0% 0%,hsla(253,16%,7%,1) 0,transparent 50%),
+        radial-gradient(at 50% 0%,hsla(225,39%,30%,1) 0,transparent 50%),
+        radial-gradient(at 100% 0%,hsla(339,49%,30%,1) 0,transparent 50%);
+    color:var(--text);
+}
+.background-orbs{position:fixed;top:0;left:0;width:100%;height:100%;overflow:hidden;z-index:0;pointer-events:none}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);animation:float 10s infinite ease-in-out alternate}
+.orb-1{width:300px;height:300px;background:rgba(102,126,234,0.4);top:10%;left:10%}
+.orb-2{width:400px;height:400px;background:rgba(118,75,162,0.4);bottom:-10%;right:-10%;animation-delay:-5s}
+@keyframes float{0%{transform:translateY(0) scale(1)}100%{transform:translateY(-50px) scale(1.1)}}
+
+/* App Layout */
+.app{position:relative;z-index:1;width:100%;max-width:720px;min-height:100vh;min-height:100dvh;display:flex;flex-direction:column;padding:1rem 1rem 0}
+
+/* Header */
+.header{text-align:center;padding:1.2rem 0 0.8rem}
+.header h1{font-size:1.35rem;font-weight:700;background:linear-gradient(to right,#fff,#cbd5e1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.header .subtitle{font-size:0.8rem;color:var(--text-muted);margin-top:0.3rem;letter-spacing:0.5px}
+
+/* Quick Info Bar */
+.quick-bar{display:flex;justify-content:center;gap:1rem;flex-wrap:wrap;padding:0.6rem 0;font-size:0.78rem;color:var(--text-muted)}
+.quick-bar .qb-item{display:flex;align-items:center;gap:0.35rem;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:99px;padding:0.35rem 0.8rem;backdrop-filter:blur(8px)}
+.quick-bar .qb-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.qb-dot.on{background:var(--green);box-shadow:0 0 8px var(--green)}
+.qb-dot.off{background:var(--red);box-shadow:0 0 8px var(--red)}
+
+/* Tab Navigation */
+.tab-nav{display:flex;gap:0.25rem;background:rgba(0,0,0,0.3);border-radius:14px;padding:0.25rem;margin:0.5rem 0}
+.tab-btn{flex:1;padding:0.6rem 0.5rem;border:none;background:transparent;color:var(--text-muted);font-family:inherit;font-size:0.82rem;font-weight:500;border-radius:11px;cursor:pointer;transition:all 0.3s ease}
+.tab-btn.active{background:rgba(255,255,255,0.1);color:#fff;box-shadow:0 2px 8px rgba(0,0,0,0.3)}
+.tab-btn:hover:not(.active){color:#cbd5e1}
+
+/* Tab Content */
+.tab-content{flex:1;overflow-y:auto;padding-bottom:1rem}
+.tab-pane{display:none;animation:fadeIn 0.35s ease}
+.tab-pane.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* Route Cards (Traffic) */
+.route-card{background:var(--card-bg);border-radius:16px;padding:1.25rem;margin-bottom:1rem;border:1px solid var(--card-border);display:flex;flex-direction:column;gap:0.4rem;border-left:4px solid transparent;transition:border-color 0.5s,box-shadow 0.5s}
+.route-card.level-agil{border-left-color:var(--green);box-shadow:inset 4px 0 12px -4px rgba(16,185,129,0.15)}
+.route-card.level-moderado{border-left-color:var(--yellow);box-shadow:inset 4px 0 12px -4px rgba(234,179,8,0.15)}
+.route-card.level-cargado{border-left-color:var(--orange);box-shadow:inset 4px 0 12px -4px rgba(249,115,22,0.15)}
+.route-card.level-colapsado{border-left-color:var(--red);box-shadow:inset 4px 0 12px -4px rgba(239,68,68,0.2);animation:pulse-red 2s ease-in-out infinite}
+@keyframes pulse-red{0%,100%{box-shadow:inset 4px 0 12px -4px rgba(239,68,68,0.2)}50%{box-shadow:inset 4px 0 20px -4px rgba(239,68,68,0.45)}}
+.route-header{display:flex;justify-content:space-between;align-items:center}
+.route-name{font-size:0.85rem;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:1px}
+.congestion-badge{font-size:0.68rem;font-weight:600;padding:0.2rem 0.55rem;border-radius:99px;letter-spacing:0.5px;text-transform:uppercase;display:none;transition:all 0.4s}
+.congestion-badge.level-agil{display:inline-block;background:var(--green-bg);color:#34d399;border:1px solid rgba(16,185,129,0.3)}
+.congestion-badge.level-moderado{display:inline-block;background:var(--yellow-bg);color:#facc15;border:1px solid rgba(234,179,8,0.3)}
+.congestion-badge.level-cargado{display:inline-block;background:var(--orange-bg);color:#fb923c;border:1px solid rgba(249,115,22,0.3)}
+.congestion-badge.level-colapsado{display:inline-block;background:var(--red-bg);color:#f87171;border:1px solid rgba(239,68,68,0.3);animation:badge-pulse 2s ease-in-out infinite}
+@keyframes badge-pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+.route-time{font-size:2.8rem;font-weight:700;color:#fff;display:flex;align-items:baseline;gap:0.4rem}
+.route-time span{font-size:1rem;color:#cbd5e1;font-weight:300}
+
+/* Bridge Viewer */
+.bridge-viewer{position:relative;border-radius:16px;overflow:hidden;margin-bottom:1rem;aspect-ratio:16/10;background:rgba(0,0,0,0.3);border:1px solid var(--card-border);transition:box-shadow 0.8s}
+.bridge-viewer.glow-agil{box-shadow:0 0 20px -5px rgba(16,185,129,0.3),inset 0 0 20px -5px rgba(16,185,129,0.1)}
+.bridge-viewer.glow-moderado{box-shadow:0 0 20px -5px rgba(234,179,8,0.3),inset 0 0 20px -5px rgba(234,179,8,0.1)}
+.bridge-viewer.glow-cargado{box-shadow:0 0 20px -5px rgba(249,115,22,0.3),inset 0 0 20px -5px rgba(249,115,22,0.1)}
+.bridge-viewer.glow-colapsado{box-shadow:0 0 25px -5px rgba(239,68,68,0.4),inset 0 0 20px -5px rgba(239,68,68,0.15)}
+.bridge-img{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity 0.8s}
+.bridge-img.active{opacity:1}
+.bridge-viewer-overlay{position:absolute;bottom:0;left:0;right:0;padding:0.6rem 0.8rem;background:linear-gradient(transparent,rgba(0,0,0,0.7));display:flex;justify-content:space-between;align-items:flex-end}
+.bridge-viewer-label{font-size:0.62rem;color:rgba(255,255,255,0.5);font-style:italic}
+.bridge-viewer-skeleton{position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(90deg,rgba(255,255,255,0.03) 25%,rgba(255,255,255,0.06) 50%,rgba(255,255,255,0.03) 75%);background-size:200% 100%;animation:loading 1.5s infinite;display:flex;align-items:center;justify-content:center}
+.bridge-viewer-skeleton svg{opacity:0.15}
+
+/* Weather */
+.weather-current{background:var(--card-bg);border-radius:16px;padding:1.5rem;border:1px solid var(--card-border);margin-bottom:1rem;text-align:center}
+.weather-icon{font-size:3.5rem;line-height:1;margin-bottom:0.3rem}
+.weather-temp{font-size:3rem;font-weight:700}
+.weather-desc{font-size:0.9rem;color:var(--text-muted);margin-top:0.2rem}
+.weather-details{display:flex;justify-content:center;gap:1.5rem;margin-top:1rem;font-size:0.8rem;color:var(--text-muted)}
+.weather-details .wd-item{display:flex;flex-direction:column;align-items:center;gap:0.2rem}
+.weather-details .wd-val{color:#fff;font-weight:600;font-size:0.95rem}
+
+.forecast-title{font-size:0.85rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.7rem;font-weight:500}
+.forecast-grid{display:flex;gap:0.5rem;overflow-x:auto;padding-bottom:0.5rem;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.forecast-grid::-webkit-scrollbar{display:none}
+.forecast-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:0.8rem 0.7rem;min-width:85px;text-align:center;flex-shrink:0}
+.forecast-card .fc-day{font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.4rem}
+.forecast-card .fc-icon{font-size:1.5rem;margin-bottom:0.3rem}
+.forecast-card .fc-temps{font-size:0.78rem;font-weight:600}
+.forecast-card .fc-temps .fc-min{color:var(--text-dim);font-weight:400}
+.forecast-card .fc-rain{font-size:0.65rem;color:var(--blue);margin-top:0.3rem}
+.forecast-card.fc-today{border-color:rgba(102,126,234,0.4);background:rgba(102,126,234,0.1)}
+
+/* Info Section */
+.info-section{margin-bottom:1.2rem}
+.info-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:1.25rem;margin-bottom:1rem}
+.info-card h3{font-size:0.95rem;font-weight:600;margin-bottom:0.8rem;display:flex;align-items:center;gap:0.5rem}
+.info-card p,.info-card li{font-size:0.82rem;color:var(--text-muted);line-height:1.6}
+.info-card ul{list-style:none;padding:0}
+.info-card li{padding:0.25rem 0}
+
+.schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem}
+.schedule-item{background:rgba(255,255,255,0.04);border-radius:10px;padding:0.8rem;text-align:center}
+.schedule-item .si-label{font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.3rem}
+.schedule-item .si-value{font-size:1rem;font-weight:600;color:#fff}
+.schedule-note{font-size:0.75rem;color:var(--text-dim);padding-top:0.5rem;border-top:1px solid var(--card-border)}
+
+/* Converter */
+.converter{display:flex;flex-direction:column;gap:0.8rem;margin-bottom:0.5rem}
+.conv-row{display:flex;gap:0.5rem;align-items:center}
+.conv-input{flex:1;background:rgba(255,255,255,0.05);border:1px solid var(--card-border);border-radius:10px;padding:0.6rem;color:#fff;font-family:inherit;font-size:1rem;outline:none;width:100%}
+.conv-input:focus{border-color:var(--blue)}
+.conv-select{background:rgba(255,255,255,0.1);border:1px solid var(--card-border);border-radius:10px;padding:0.6rem;color:#fff;font-family:inherit;font-size:0.9rem;outline:none;cursor:pointer}
+.conv-select option{background:#1e293b;color:#fff}
+.conv-result{flex:1;background:rgba(255,255,255,0.02);border:1px solid transparent;border-radius:10px;padding:0.6rem;color:#fff;font-size:1.1rem;font-weight:600;display:flex;align-items:center;min-height:42px;overflow:hidden;text-overflow:ellipsis}
+
+.links-group{margin-bottom:1rem}
+.links-group h4{font-size:0.78rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:0.5rem;font-weight:500}
+.links-group a{display:block;padding:0.45rem 0;font-size:0.82rem;color:var(--blue);text-decoration:none;transition:color 0.2s}
+.links-group a:hover{color:#8b9cf7}
+.links-group a::before{content:'→ ';color:var(--text-dim)}
+
+/* Status Footer */
+.status-footer{display:flex;justify-content:space-between;align-items:center;padding:0.8rem 0;font-size:0.75rem;color:var(--text-dim);border-top:1px solid var(--card-border);margin-top:auto}
+.status-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px}
+.status-dot.success{background:var(--green);box-shadow:0 0 8px var(--green)}
+.status-dot.error{background:var(--red);box-shadow:0 0 8px var(--red)}
+.status-dot.initializing{background:#f59e0b;box-shadow:0 0 8px #f59e0b}
+
+.attribution{text-align:center;padding:0.5rem 0 1rem;font-size:0.65rem;color:var(--text-dim)}
+.attribution a{color:var(--text-dim);text-decoration:underline}
+
+/* Ad Space */
+.ad-space{background:rgba(0,0,0,0.15);border:1px dashed rgba(255,255,255,0.08);border-radius:12px;padding:1rem;text-align:center;margin:0.5rem 0;min-height:60px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--text-dim)}
+
+/* Skeleton */
+.skeleton{background:linear-gradient(90deg,rgba(255,255,255,0.05) 25%,rgba(255,255,255,0.1) 50%,rgba(255,255,255,0.05) 75%);background-size:200% 100%;animation:loading 1.5s infinite;border-radius:8px;height:48px;width:70%}
+@keyframes loading{0%{background-position:200% 0}100%{background-position:-200% 0}}
+.error-message{color:var(--red);font-size:0.82rem;margin-top:0.5rem;display:none}
+
+@media(max-width:400px){
+    .app{padding:0.6rem 0.6rem 0}
+    .route-time{font-size:2.2rem}
+    .weather-temp{font-size:2.5rem}
+    .quick-bar{gap:0.5rem}
+}
