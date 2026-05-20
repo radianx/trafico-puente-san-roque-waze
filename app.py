@@ -1,11 +1,10 @@
-from flask import Flask, jsonify, render_template, request, send_file
+from flask import Flask, jsonify, render_template, request, send_from_directory
 import WazeRouteCalculator
 import threading
 import time
 import logging
 from datetime import datetime, timezone
 
-from og_image import generate_og_jpeg
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 # Desactivar logs innecesarios de la librería de Waze
@@ -39,7 +38,7 @@ def site_base_url():
 def build_og_meta():
     base = site_base_url()
     cache = trafico_cache
-    og_image = f"{base}/og-image.jpg"
+    og_image = f"{base}/og-image.webp"
 
     if cache.get("status") == "success":
         ida = cache.get("ida_encarnacion", "--")
@@ -120,12 +119,11 @@ def index():
     return render_template('index.html', **build_og_meta())
 
 
-@app.route('/og-image.jpg', methods=['GET'])
-def og_image():
-    """Imagen Open Graph generada con los tiempos actuales (WhatsApp, Telegram, etc.)."""
-    buf = generate_og_jpeg(trafico_cache)
-    response = send_file(buf, mimetype='image/jpeg')
-    response.headers['Cache-Control'] = 'public, max-age=300'
+@app.route('/og-image.webp', methods=['GET'])
+def og_image_static():
+    """Imagen Open Graph estática (WhatsApp cachea previews agresivamente)."""
+    response = send_from_directory('static/images', 'vista_previa.webp', mimetype='image/webp')
+    response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
     return response
 
 
