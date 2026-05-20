@@ -34,19 +34,19 @@
             <h1>Puente San Roque González</h1>
             <p class="header-tagline">Tiempos de cruce en vivo</p>
             <div class="subtitle" aria-label="Posadas Argentina y Encarnación Paraguay">Posadas 🇦🇷 ↔ Encarnación 🇵🇾</div>
-            <div class="header-actions">
-                <button type="button" class="icon-btn" id="btn-share" title="Compartir estado" aria-label="Compartir estado del puente">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                    <span>Compartir</span>
-                </button>
-            </div>
         </header>
 
         <div class="traffic-summary" id="traffic-summary" aria-label="Resumen de tráfico" hidden>
-            <span class="ts-item" id="ts-ida">Ida --</span>
-            <span class="ts-sep" aria-hidden="true">·</span>
-            <span class="ts-item" id="ts-vuelta">Vuelta --</span>
-            <span class="ts-worst" id="ts-worst"></span>
+            <div class="ts-main">
+                <span class="ts-item" id="ts-ida">Ida --</span>
+                <span class="ts-sep" aria-hidden="true">·</span>
+                <span class="ts-item" id="ts-vuelta">Vuelta --</span>
+                <span class="ts-worst" id="ts-worst"></span>
+            </div>
+            <button type="button" class="icon-btn icon-btn-share" id="btn-share" title="Compartir estado" aria-label="Compartir estado del puente">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                <span>Compartir</span>
+            </button>
         </div>
 
         <div class="quick-bar">
@@ -253,11 +253,18 @@
             </div>
         </main>
 
-        <div class="ad-space" id="ad-container">
-            <div class="ad-label">Espacio publicitario — <a href="mailto:sbardemadrian@gmail.com">Anunciá aquí</a></div>
+        <section class="ads-section" aria-label="Espacio publicitario">
+            <p class="ad-label">Espacio publicitario — <a href="mailto:sbardemadrian@gmail.com">Anunciá aquí</a></p>
+            <aside class="sponsored-banner" aria-label="Publicidad">
+                <img src="/static/images/banner-pereira-marino.jpg"
+                    alt="Carlos Pereira Intendente y Marino Concejal — Lista 4, Opción 5. ¡Adelante Encarnación!"
+                    width="1024" height="534" loading="lazy" decoding="async">
+            </aside>
+            <div class="ad-space" id="ad-container">
             <script async="async" data-cfasync="false" src="https://pl29487784.effectivecpmnetwork.com/50f09ddb979407af1832957c7f55167e/invoke.js"></script>
             <div id="container-50f09ddb979407af1832957c7f55167e"></div>
-        </div>
+            </div>
+        </section>
 
         <footer class="status-footer">
             <div class="status-left">
