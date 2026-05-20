@@ -312,37 +312,22 @@ document.getElementById('btn-retry').addEventListener('click', () => fetchTraffi
 fetchTrafficData();
 setInterval(() => fetchTrafficData(), 30000);
 
-// === Share ===
-function buildShareText(includeUrl) {
-    const base = (!lastTrafficData || lastTrafficData.status !== 'success')
-        ? 'Puente San Roque González (Posadas ↔ Encarnación) — Consultá el tráfico en vivo.'
-        : (() => {
-            const mI = extractMinutes(lastTrafficData.ida_encarnacion);
-            const mV = extractMinutes(lastTrafficData.vuelta_posadas);
-            const rel = formatRelativeTime(lastTrafficData.timestamp);
-            return `🌉 Puente Posadas ↔ Encarnación\n` +
-                `Posadas → Encarnación: ${mI} min\n` +
-                `Encarnación → Posadas: ${mV} min\n` +
-                `Actualizado ${rel}`;
-        })();
-    return includeUrl ? `${base}\n${window.location.href}` : base;
+// === Share (solo URL; preview con imagen vía Open Graph en el servidor) ===
+function getShareUrl() {
+    return window.location.origin + window.location.pathname;
 }
 
 async function shareStatus() {
+    const url = getShareUrl();
     if (navigator.share) {
         try {
-            await navigator.share({
-                title: 'Tráfico Puente',
-                text: buildShareText(false),
-                url: window.location.href
-            });
+            await navigator.share({ url });
             return;
         } catch (e) {
             if (e.name === 'AbortError') return;
         }
     }
-    const waUrl = 'https://wa.me/?text=' + encodeURIComponent(buildShareText(true));
-    window.open(waUrl, '_blank', 'noopener,noreferrer');
+    window.open('https://wa.me/?text=' + encodeURIComponent(url), '_blank', 'noopener,noreferrer');
 }
 
 document.getElementById('btn-share').addEventListener('click', shareStatus);
