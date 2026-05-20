@@ -313,31 +313,35 @@ fetchTrafficData();
 setInterval(() => fetchTrafficData(), 30000);
 
 // === Share ===
-function buildShareText() {
-    if (!lastTrafficData || lastTrafficData.status !== 'success') {
-        return 'Puente San Roque González (Posadas ↔ Encarnación) — Consultá el tráfico en vivo.';
-    }
-    const mI = extractMinutes(lastTrafficData.ida_encarnacion);
-    const mV = extractMinutes(lastTrafficData.vuelta_posadas);
-    const rel = formatRelativeTime(lastTrafficData.timestamp);
-    return `🌉 Puente Posadas ↔ Encarnación\n` +
-        `Posadas → Encarnación: ${mI} min\n` +
-        `Encarnación → Posadas: ${mV} min\n` +
-        `Actualizado ${rel}\n` +
-        window.location.href;
+function buildShareText(includeUrl) {
+    const base = (!lastTrafficData || lastTrafficData.status !== 'success')
+        ? 'Puente San Roque González (Posadas ↔ Encarnación) — Consultá el tráfico en vivo.'
+        : (() => {
+            const mI = extractMinutes(lastTrafficData.ida_encarnacion);
+            const mV = extractMinutes(lastTrafficData.vuelta_posadas);
+            const rel = formatRelativeTime(lastTrafficData.timestamp);
+            return `🌉 Puente Posadas ↔ Encarnación\n` +
+                `Posadas → Encarnación: ${mI} min\n` +
+                `Encarnación → Posadas: ${mV} min\n` +
+                `Actualizado ${rel}`;
+        })();
+    return includeUrl ? `${base}\n${window.location.href}` : base;
 }
 
 async function shareStatus() {
-    const text = buildShareText();
     if (navigator.share) {
         try {
-            await navigator.share({ title: 'Tráfico Puente', text, url: window.location.href });
+            await navigator.share({
+                title: 'Tráfico Puente',
+                text: buildShareText(false),
+                url: window.location.href
+            });
             return;
         } catch (e) {
             if (e.name === 'AbortError') return;
         }
     }
-    const waUrl = 'https://wa.me/?text=' + encodeURIComponent(text);
+    const waUrl = 'https://wa.me/?text=' + encodeURIComponent(buildShareText(true));
     window.open(waUrl, '_blank', 'noopener,noreferrer');
 }
 
