@@ -1,0 +1,11 @@
+{
+  "name": "Tráfico Puente Posadas - Encarnación",
+  "short_name": "Puente Tráfico",
+  "description": "Tiempos de cruce en vivo del Puente San Roque González",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "lang": "es",
+  "orientation": "portrait-primary"
+}
