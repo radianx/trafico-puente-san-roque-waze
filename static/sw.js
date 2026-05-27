@@ -42,3 +42,50 @@ self.addEventListener('fetch', (e) => {
     );
   }
 });
+
+// === Web Push Event Listeners ===
+
+self.addEventListener('push', function(event) {
+  if (!event.data) return;
+  
+  try {
+    const data = event.data.json();
+    const title = data.title || 'Alerta de Tránsito';
+    const options = {
+      body: data.body || 'Nuevos datos del puente disponibles.',
+      icon: '/static/images/vista_previa.webp',
+      vibrate: [200, 100, 200],
+      badge: '/static/images/vista_previa.webp',
+      data: {
+        url: '/'
+      }
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification(title, options)
+    );
+  } catch (err) {
+    console.error('Error al procesar evento push en Service Worker:', err);
+  }
+});
+
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  
+  const targetUrl = '/';
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+      // Intentar enfocar una pestaña abierta que corresponda al sitio
+      for (const client of clientList) {
+        if (client.url.indexOf(targetUrl) !== -1 && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // Si no hay pestañas abiertas, abrir una nueva
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
+});

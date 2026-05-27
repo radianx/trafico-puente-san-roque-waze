@@ -1,0 +1,52 @@
+[
+  {
+    "endpoint": "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABqFxJ3kNJU3cl34kqBCYLcEb3VxBAx1L53IwmdI2azivsLXJc8_Gx-8f-O29tLSdodRZJy9azYynIvdA9dBd-evQ3UyGn4aWGdx-Z0td7mThIMF4ihAVXTaDOQ3C917cC7yBYaKRGsg_N6XMv3oNFJJfJV6Gqoe80VU8cCNtpQKoMnRvs",
+    "keys": {
+      "auth": "6HxHqwCK8jChDgrgTLGP0g",
+      "p256dh": "BAM42M8ue4JDOg5zLcgM_Sg2OjLHwQmv1s8VI94LjLwFYu0yikVXK-Ayw2WMsmlkjH5eI--LzwEGD-kGFUSB8Ng"
+    },
+    "threshold": 15,
+    "direction": "ida",
+    "last_notified_value": 19
+  },
+  {
+    "endpoint": "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABqFy2dBeBV5SKRj-X35DuTG3JIKTWGB-Zp2ncZ3XrhoR-r_N6rbx3o7qS2HkYvHr3LZ3ICmrXDiuOSWD-az22UChZKfTAW-Zhb8Zb7a8qU2pK8dn3IsQiebhBNWfPt16-UqVk8_IA-328MWkUVcYH4JocW2tj61K9Pz_FIuxIfnMilfSo",
+    "keys": {
+      "auth": "St1cV1fnHl36p5oqV-23kg",
+      "p256dh": "BBwb3Yf3lhJLRoHFU_Ai3N7WZgtPvSoXbzoDVpNEiWQk5-r9ZfXvV31SON_hCrLUgcdmPoVHMER-EbpL9txa_7U"
+    },
+    "threshold": 15,
+    "direction": "ida",
+    "last_notified_value": 19
+  },
+  {
+    "endpoint": "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABqFzAZ7xrWhW_ygsl5eCSavmO0foB5ooFkOINv6TM18YrFSyjXP4sLWAR68q6lvViea3x1XBj1U7hSWHBLaDjq9zrfeGP9DJREwvndUtU670pbWyg5j-9qxOwFtTSwjRc8kfeL7mlnDwHs-xXHcbrZee_AEXWtGTOS6COxH4Qxd5NUzwk",
+    "keys": {
+      "auth": "yVC_EomQ4358WRrJY1IsxA",
+      "p256dh": "BLKf9kOtAj4B4iGVKsYyqxJZ-0wPhN_jzSvDbh916RlapWGV6YS7PPx17e2OoqQB6RLknHHmh7eKwwg9y7Uwqis"
+    },
+    "threshold": 15,
+    "direction": "ida",
+    "last_notified_value": 19
+  },
+  {
+    "endpoint": "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABqFzCmVCFnM1gCsxXwNKK9keDtGOPqbRyK_d8Sok9AVzEHZeI3Vdkjiz3w0bzorsf-0z6O36sia4PMCjArv1koK8xKV-p_HEvhmjJ1CTJ6ilGhpG8zthQH6GkTQ14MmKSEEhE1NY37cMDQggBL9UNJRe7sOaksNZ4qzog-Dq95FEWq34A",
+    "keys": {
+      "auth": "rgWnh_91P80cxbegc0a6oA",
+      "p256dh": "BI_08AM4ka9K3y_kQ_y5XwlRd08g2YBTiEddmTLeEnpOMpyO8Q4_KZJBAYtXUZB82EbdggrRDXdBx847nNPM_KE"
+    },
+    "threshold": 15,
+    "direction": "ida",
+    "last_notified_value": 19
+  },
+  {
+    "endpoint": "https://updates.push.services.mozilla.com/wpush/v2/gAAAAABqFzPdPnWcAQvn9nG5DZU5phxw6a4SyDvlas4t8zenkmrbuTNzxlh3o3-ILIgpG7eyQuqQt0yHxF6yAPgkPu1N1jJC3UpelY5Lk6Jn3ssJlA18uA5IyXYxybgKZv9BWo8Rbbmu0vfSB1G3BWrK_Fu3GK2NgXgSkt7wskubCfU1HpHZqqw",
+    "keys": {
+      "auth": "rrHmzX6uIlzFJEnE-B-fbQ",
+      "p256dh": "BN8J2d6lj3cBbNC1rV30YHj7gcdimjfSLq0JwvUqOh0510wtQLQ9-rrB5lBojt9fGPzb2F_JD6AnlAHjMWKyclI"
+    },
+    "threshold": 15,
+    "direction": "ida",
+    "last_notified_value": 19
+  }
+]

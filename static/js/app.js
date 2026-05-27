@@ -491,7 +491,193 @@ document.getElementById('conv-swap').addEventListener('click', () => {
 fetchRates();
 setInterval(fetchRates, 60 * 60 * 1000);
 
-// === PWA service worker ===
+// === PWA service worker — register early so SW is ready before push logic ===
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js').catch(() => {});
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.warn('Service Worker registration failed:', err);
+    });
 }
+
+// === Web Push Notifications Logic ===
+let isSubscribed = false;
+let activeSubscription = null;
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+        .replace(/\-/g, '+')
+        .replace(/_/g, '/');
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+}
+
+function initPushNotifications() {
+    const alertSettings = document.getElementById('alert-settings');
+    const alertToggle = document.getElementById('alert-toggle');
+    const alertOptions = document.getElementById('alert-options');
+    const alertDirection = document.getElementById('alert-direction');
+    const alertThreshold = document.getElementById('alert-threshold');
+    const alertSaveBtn = document.getElementById('alert-save-btn');
+
+    if (!alertSettings) return;
+
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        // Web Push no soportado
+        alertSettings.style.display = 'none';
+        return;
+    }
+
+    // Inicializar valores desde localStorage si existen
+    if (localStorage.getItem('alert-direction')) {
+        alertDirection.value = localStorage.getItem('alert-direction');
+    }
+    if (localStorage.getItem('alert-threshold')) {
+        alertThreshold.value = localStorage.getItem('alert-threshold');
+    }
+
+    // Verificar si ya existe suscripción activa
+    navigator.serviceWorker.ready.then(reg => {
+        return reg.pushManager.getSubscription();
+    }).then(subscription => {
+        if (subscription) {
+            isSubscribed = true;
+            activeSubscription = subscription;
+            alertToggle.checked = true;
+            alertOptions.style.display = 'block';
+        }
+    }).catch(err => {
+        console.error('Error al obtener suscripción de push activa:', err);
+    });
+
+    async function subscribeUser() {
+        try {
+            // Solicitar permiso
+            const permission = await Notification.requestPermission();
+            if (permission !== 'granted') {
+                showToast('Permiso de notificaciones denegado.', 'error');
+                alertToggle.checked = false;
+                return;
+            }
+
+            // Obtener llave VAPID pública del backend
+            const keyRes = await fetch('/api/push/vapid-public-key');
+            const keyData = await keyRes.json();
+            if (!keyData.public_key) {
+                throw new Error(keyData.error || 'No se obtuvo la llave VAPID');
+            }
+
+            const reg = await navigator.serviceWorker.ready;
+            const sub = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(keyData.public_key)
+            });
+
+            // Enviar al servidor
+            const threshold = parseInt(alertThreshold.value, 10);
+            const direction = alertDirection.value;
+
+            // toJSON() is required to correctly serialize p256dh + auth keys
+            const saveRes = await fetch('/api/push/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    subscription: sub.toJSON(),
+                    threshold: threshold,
+                    direction: direction
+                })
+            });
+
+            const saveData = await saveRes.json();
+            if (saveData.status === 'success') {
+                isSubscribed = true;
+                activeSubscription = sub;
+                localStorage.setItem('alert-direction', direction);
+                localStorage.setItem('alert-threshold', threshold);
+                alertOptions.style.display = 'block';
+                showToast('🔔 Alertas activadas con éxito.', 'success');
+            } else {
+                throw new Error(saveData.error || 'Error al guardar suscripción');
+            }
+        } catch (err) {
+            console.error('Error al suscribir usuario a push:', err);
+            showToast('No se pudieron activar las alertas.', 'error');
+            alertToggle.checked = false;
+        }
+    }
+
+    async function unsubscribeUser() {
+        if (!activeSubscription) return;
+        try {
+            // Intentar remover del servidor primero
+            await fetch('/api/push/unsubscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ endpoint: activeSubscription.endpoint })
+            });
+
+            await activeSubscription.unsubscribe();
+
+            isSubscribed = false;
+            activeSubscription = null;
+            alertOptions.style.display = 'none';
+            showToast('🔕 Alertas desactivadas.', 'info');
+        } catch (err) {
+            console.error('Error al desuscribir usuario:', err);
+            showToast('Error al desactivar las alertas.', 'error');
+        }
+    }
+
+    alertToggle.addEventListener('change', () => {
+        if (alertToggle.checked) {
+            subscribeUser();
+        } else {
+            unsubscribeUser();
+        }
+    });
+
+    alertSaveBtn.addEventListener('click', async () => {
+        if (!isSubscribed || !activeSubscription) return;
+        
+        alertSaveBtn.disabled = true;
+        alertSaveBtn.textContent = 'Guardando...';
+
+        try {
+            const threshold = parseInt(alertThreshold.value, 10);
+            const direction = alertDirection.value;
+
+            const saveRes = await fetch('/api/push/subscribe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    subscription: activeSubscription,
+                    threshold: threshold,
+                    direction: direction
+                })
+            });
+
+            const saveData = await saveRes.json();
+            if (saveData.status === 'success') {
+                localStorage.setItem('alert-direction', direction);
+                localStorage.setItem('alert-threshold', threshold);
+                showToast('💾 Configuración guardada.', 'success');
+            } else {
+                throw new Error(saveData.error || 'Error al guardar');
+            }
+        } catch (err) {
+            console.error('Error al guardar configuración:', err);
+            showToast('No se pudo guardar la configuración.', 'error');
+        } finally {
+            alertSaveBtn.disabled = false;
+            alertSaveBtn.textContent = 'Guardar Configuración';
+        }
+    });
+
+}
+
+initPushNotifications();
+
+// (service worker already registered above, before push init)

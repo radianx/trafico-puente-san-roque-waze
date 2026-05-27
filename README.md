@@ -62,6 +62,21 @@ Este proyecto está listo para ser desplegado en plataformas como **Render.com**
 2. Selecciona este repositorio.
 3. La plataforma detectará automáticamente `requirements.txt` y correrá el servidor Flask sin configuraciones extra.
 
+### Persistencia de Push con Supabase (recomendado en Render)
+
+Para que las notificaciones push no se rompan en reinicios/deploys, configurá una base PostgreSQL (Supabase):
+
+1. En tu proyecto de Supabase, copiá la URL de conexión Postgres.
+2. En Render, agregá una variable de entorno:
+   - `SUPABASE_DB_URL` (o `DATABASE_URL`) con la URL completa.
+3. Redeploy del servicio.
+
+Con eso, la app crea automáticamente estas tablas:
+- `push_config` (claves VAPID)
+- `push_subscriptions` (suscripciones del navegador)
+
+Si no hay URL configurada, la app sigue en modo local usando archivos (`private_key.pem`, `public_key.txt`, `subscriptions.json`).
+
 ## Tecnologías
 - [Flask](https://flask.palletsprojects.com/) (Framework web)
 - [WazeRouteCalculator](https://github.com/kovacsvalentin/WazeRouteCalculator) (Engine para Waze)

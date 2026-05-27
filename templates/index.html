@@ -89,6 +89,52 @@
 
         <main class="tab-content" id="main-content">
             <div class="tab-pane active" id="tab-trafico" role="tabpanel" aria-labelledby="btn-trafico">
+                <!-- Panel de Alertas Web Push -->
+                <div class="alert-settings-card" id="alert-settings">
+                    <div class="alert-header">
+                        <div class="alert-title-group">
+                            <span class="alert-icon">🔔</span>
+                            <div class="alert-text-container">
+                                <h3 class="alert-title">Alertas de Tráfico</h3>
+                                <p class="alert-description">Recibí notificaciones en vivo cuando el puente supere el límite de demora.</p>
+                            </div>
+                        </div>
+                        <label class="switch" aria-label="Activar alertas de tráfico">
+                            <input type="checkbox" id="alert-toggle">
+                            <span class="slider round"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="alert-options" id="alert-options" style="display: none;">
+                        <div class="alert-option-row">
+                            <div class="alert-label-group">
+                                <label for="alert-direction" class="alert-label">Dirección a vigilar</label>
+                                <span class="alert-hint">Elegí qué sentido del puente monitorear</span>
+                            </div>
+                            <select id="alert-direction" class="alert-select">
+                                <option value="ida">Posadas ➔ Encarnación</option>
+                                <option value="vuelta">Encarnación ➔ Posadas</option>
+                                <option value="ambas">Ambas direcciones</option>
+                            </select>
+                        </div>
+                        
+                        <div class="alert-option-row">
+                            <div class="alert-label-group">
+                                <label for="alert-threshold" class="alert-label">Límite de tiempo</label>
+                                <span class="alert-hint">Notificar cuando la espera supere los minutos indicados</span>
+                            </div>
+                            <div class="alert-input-container">
+                                <input type="number" id="alert-threshold" class="alert-input" value="60" min="15" max="300" step="5">
+                                <span class="alert-input-suffix">minutos</span>
+                            </div>
+                        </div>
+                        
+                        <div class="alert-actions">
+                            <button type="button" id="alert-save-btn" class="alert-btn primary">Guardar Configuración</button>
+                        </div>
+                    </div>
+                </div>
+                
                 <div class="routes-grid">
                     <div class="route-card" id="card-ida">
                         <div class="route-header">
@@ -127,6 +173,8 @@
                         <span class="bridge-viewer-label" id="bridge-caption">Imagen representativa · No refleja el estado actual</span>
                     </div>
                 </div>
+
+                
                 <div class="error-message" id="error-box" role="alert"></div>
             </div>
 
