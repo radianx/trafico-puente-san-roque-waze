@@ -1,0 +1,7 @@
+# AI Agent Rules for Trafico Puente
+
+## ⚠️ CRITICAL CONSTRAINT (PreToolUse)
+- **NO GIT PUSH:** You are strictly forbidden from running the `git push` command. Pushing code triggers an immediate, automatic production deploy to Render.com. Always prompt the user to review and execute git pushes manually.
+
+## 📄 PROJECT CONTEXT
+- A detailed guide to the architecture, endpoints, styling, and codebase is available in [agents.md](file:///home/adrian/programacion/adrian/traficoPuente/agents.md). Make sure to read and digest `agents.md` before making any code modifications.

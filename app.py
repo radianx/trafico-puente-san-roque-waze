@@ -18,7 +18,6 @@ POSADAS_COORDS = "-27.4035,-55.8928"
 ENCARNACION_COORDS = "-27.3522,-55.8588"
 REGION = 'EU'
 UPDATE_INTERVAL_SECONDS = 5 * 60  # 5 minutos
-ADJUST_FACTOR = 1.18
 
 # Estructura global para almacenar en memoria el último resultado
 trafico_cache = {
@@ -78,8 +77,8 @@ def update_traffic_data():
             route_vuelta = WazeRouteCalculator.WazeRouteCalculator(ENCARNACION_COORDS, POSADAS_COORDS, REGION)
             tiempo_vuelta_raw, _ = route_vuelta.calc_route_info(real_time=True)
 
-            tiempo_ida = tiempo_ida_raw * ADJUST_FACTOR
-            tiempo_vuelta = tiempo_vuelta_raw * ADJUST_FACTOR
+            tiempo_ida = tiempo_ida_raw
+            tiempo_vuelta = tiempo_vuelta_raw
 
             trafico_cache["ida_encarnacion"] = f"{tiempo_ida:.0f}min"
             trafico_cache["vuelta_posadas"] = f"{tiempo_vuelta:.0f}min"
