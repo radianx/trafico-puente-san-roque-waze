@@ -522,6 +522,7 @@ function initPushNotifications() {
     const alertDirection = document.getElementById('alert-direction');
     const alertThreshold = document.getElementById('alert-threshold');
     const alertSaveBtn = document.getElementById('alert-save-btn');
+    const alertSummary = document.getElementById('alert-summary');
 
     if (!alertSettings) return;
 
@@ -529,6 +530,20 @@ function initPushNotifications() {
         // Web Push no soportado
         alertSettings.style.display = 'none';
         return;
+    }
+
+    function formatDirectionLabel(direction) {
+        if (direction === 'ida') return 'Posadas ➔ Encarnación';
+        if (direction === 'vuelta') return 'Encarnación ➔ Posadas';
+        if (direction === 'ambas') return 'ambas direcciones';
+        return direction;
+    }
+
+    function updateAlertSummary(direction, threshold) {
+        if (!alertSummary) return;
+        const dirLabel = formatDirectionLabel(direction);
+        alertSummary.textContent = `Vigilando: ${dirLabel}, límite ${threshold} min`;
+        alertSummary.hidden = false;
     }
 
     // Inicializar valores desde localStorage si existen
@@ -547,7 +562,10 @@ function initPushNotifications() {
             isSubscribed = true;
             activeSubscription = subscription;
             alertToggle.checked = true;
-            alertOptions.style.display = 'block';
+            alertOptions.style.display = 'none';
+            const threshold = parseInt(alertThreshold.value, 10);
+            const direction = alertDirection.value;
+            updateAlertSummary(direction, threshold);
         }
     }).catch(err => {
         console.error('Error al obtener suscripción de push activa:', err);
@@ -597,7 +615,8 @@ function initPushNotifications() {
                 activeSubscription = sub;
                 localStorage.setItem('alert-direction', direction);
                 localStorage.setItem('alert-threshold', threshold);
-                alertOptions.style.display = 'block';
+                updateAlertSummary(direction, threshold);
+                alertOptions.style.display = 'none';
                 showToast('🔔 Alertas activadas con éxito.', 'success');
             } else {
                 throw new Error(saveData.error || 'Error al guardar suscripción');
@@ -633,8 +652,11 @@ function initPushNotifications() {
 
     alertToggle.addEventListener('change', () => {
         if (alertToggle.checked) {
+            alertOptions.style.display = 'block';
+            if (alertSummary) alertSummary.hidden = true;
             subscribeUser();
         } else {
+            if (alertSummary) alertSummary.hidden = true;
             unsubscribeUser();
         }
     });
@@ -663,6 +685,8 @@ function initPushNotifications() {
             if (saveData.status === 'success') {
                 localStorage.setItem('alert-direction', direction);
                 localStorage.setItem('alert-threshold', threshold);
+                updateAlertSummary(direction, threshold);
+                alertOptions.style.display = 'none';
                 showToast('💾 Configuración guardada.', 'success');
             } else {
                 throw new Error(saveData.error || 'Error al guardar');

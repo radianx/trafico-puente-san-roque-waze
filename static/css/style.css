@@ -175,6 +175,12 @@ body{
 .info-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:1.25rem;margin-bottom:1rem}
 .info-card h3{font-size:0.95rem;font-weight:600;margin-bottom:0.8rem}
 .info-card p{font-size:0.82rem;color:var(--text-muted);line-height:1.6;max-width:65ch}
+
+.alert-summary{
+    font-size:0.75rem;
+    color:var(--text-dim);
+    margin-top:0.15rem;
+}
 .schedule-grid{display:grid;grid-template-columns:1fr 1fr;gap:0.8rem;margin-bottom:0.8rem}
 .schedule-item{background:rgba(255,255,255,0.04);border-radius:10px;padding:0.8rem;text-align:center}
 .schedule-item .si-label{font-size:0.7rem;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:0.3rem}
