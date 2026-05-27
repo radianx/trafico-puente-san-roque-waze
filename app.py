@@ -23,6 +23,8 @@ except Exception:
 PRIVATE_KEY_FILE = "private_key.pem"
 PUBLIC_KEY_FILE = "public_key.txt"
 SUBSCRIPTIONS_FILE = "subscriptions.json"
+DB_RUNTIME_DISABLED = False
+DB_RUNTIME_DISABLE_REASON = None
 
 
 def get_db_url():
@@ -30,19 +32,26 @@ def get_db_url():
 
 
 def db_enabled():
-    return bool(get_db_url()) and psycopg2 is not None
+    return bool(get_db_url()) and psycopg2 is not None and not DB_RUNTIME_DISABLED
 
 
 @contextmanager
 def db_conn():
+    global DB_RUNTIME_DISABLED, DB_RUNTIME_DISABLE_REASON
     url = get_db_url()
     if not url:
         raise RuntimeError("Supabase/Postgres URL is not configured")
-    with psycopg2.connect(url) as conn:
-        yield conn
+    try:
+        with psycopg2.connect(url) as conn:
+            yield conn
+    except Exception as exc:
+        DB_RUNTIME_DISABLED = True
+        DB_RUNTIME_DISABLE_REASON = str(exc)
+        raise
 
 
 def init_db():
+    global DB_RUNTIME_DISABLED, DB_RUNTIME_DISABLE_REASON
     if not get_db_url():
         logging.info("SUPABASE_DB_URL/DATABASE_URL no configurada. Usando almacenamiento local de archivos.")
         return
@@ -50,29 +59,37 @@ def init_db():
         logging.warning("SUPABASE_DB_URL configurada pero psycopg2 no está instalado. Usando almacenamiento local.")
         return
 
-    with db_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS push_config (
-                    config_key TEXT PRIMARY KEY,
-                    private_key_pem TEXT NOT NULL,
-                    public_key TEXT NOT NULL,
-                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-                );
-            """)
-            cur.execute("""
-                CREATE TABLE IF NOT EXISTS push_subscriptions (
-                    endpoint TEXT PRIMARY KEY,
-                    p256dh TEXT NOT NULL,
-                    auth TEXT NOT NULL,
-                    threshold INTEGER NOT NULL,
-                    direction TEXT NOT NULL,
-                    last_notified_value JSONB NULL,
-                    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-                );
-            """)
-        conn.commit()
+    try:
+        with db_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS push_config (
+                        config_key TEXT PRIMARY KEY,
+                        private_key_pem TEXT NOT NULL,
+                        public_key TEXT NOT NULL,
+                        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    );
+                """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS push_subscriptions (
+                        endpoint TEXT PRIMARY KEY,
+                        p256dh TEXT NOT NULL,
+                        auth TEXT NOT NULL,
+                        threshold INTEGER NOT NULL,
+                        direction TEXT NOT NULL,
+                        last_notified_value JSONB NULL,
+                        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                    );
+                """)
+            conn.commit()
+    except Exception as exc:
+        DB_RUNTIME_DISABLED = True
+        DB_RUNTIME_DISABLE_REASON = str(exc)
+        logging.warning(
+            "No se pudo conectar a Supabase/Postgres. Se activa fallback local. error=%s",
+            exc,
+        )
 
 def _generate_vapid_keys():
     """Genera un nuevo par de claves VAPID y lo guarda en DB o archivos locales."""
