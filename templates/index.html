@@ -43,7 +43,8 @@
         <header class="header">
             <h1>Puente San Roque González</h1>
             <p class="header-tagline">Tiempos de cruce en vivo</p>
-            <div class="subtitle" aria-label="Posadas Argentina y Encarnación Paraguay">Posadas 🇦🇷 ↔ Encarnación 🇵🇾</div>
+            <div class="subtitle" aria-label="Posadas Argentina y Encarnación Paraguay">Posadas 🇦🇷 ↔ Encarnación 🇵🇾
+            </div>
         </header>
 
         <div class="traffic-summary" id="traffic-summary" aria-label="Resumen de tráfico" hidden>
@@ -53,51 +54,119 @@
                 <span class="ts-item" id="ts-vuelta">Vuelta --</span>
                 <span class="ts-worst" id="ts-worst"></span>
             </div>
-            <button type="button" class="icon-btn icon-btn-share" id="btn-share" title="Compartir estado" aria-label="Compartir estado del puente">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+            <button type="button" class="icon-btn icon-btn-share" id="btn-share" title="Compartir estado"
+                aria-label="Compartir estado del puente">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    aria-hidden="true">
+                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                    <polyline points="16 6 12 2 8 6" />
+                    <line x1="12" y1="2" x2="12" y2="15" />
+                </svg>
                 <span>Compartir</span>
             </button>
         </div>
 
-        <div class="quick-bar">
-            <div class="qb-item" id="clock-ar">
-                <span aria-hidden="true">🕐</span>
-                <span aria-hidden="true">🇦🇷</span>
-                <span class="tabular-nums" id="clock-ar-text">--:--</span>
-            </div>
-            <div class="qb-item" id="clock-py">
-                <span aria-hidden="true">🕐</span>
-                <span aria-hidden="true">🇵🇾</span>
-                <span class="tabular-nums" id="clock-py-text">--:--</span>
-            </div>
-            <div class="qb-item" id="train-bar">
-                <span class="qb-dot off" id="train-dot" aria-hidden="true"></span>
-                <span aria-hidden="true">🚂</span>
-                <span class="qb-label">Tren:</span>
-                <span id="train-status">Cargando...</span>
-            </div>
-        </div>
-
-        <nav class="tab-nav" role="tablist" aria-label="Secciones principales">
-            <button class="tab-btn active" data-tab="trafico" role="tab" aria-selected="true"
-                aria-controls="tab-trafico" id="btn-trafico" tabindex="0">Tráfico</button>
-            <button class="tab-btn" data-tab="clima" role="tab" aria-selected="false"
-                aria-controls="tab-clima" id="btn-clima" tabindex="-1">Clima</button>
-            <button class="tab-btn" data-tab="info" role="tab" aria-selected="false"
-                aria-controls="tab-info" id="btn-info" tabindex="-1">Info</button>
-        </nav>
-
         <main class="tab-content" id="main-content">
             <div class="tab-pane active" id="tab-trafico" role="tabpanel" aria-labelledby="btn-trafico">
+
+                <div class="digital-board">
+                    <div class="board-bezel">
+                        <!-- Top display bar: clocks & date -->
+                        <div class="board-header">
+                            <div class="board-clock" id="board-clock-ar" title="Hora local en Argentina">
+                                <span class="flag" aria-hidden="true">🇦🇷</span>
+                                <span class="time-text tabular-nums"><span id="board-clock-ar-hour">--</span><span class="colon-blink">:</span><span id="board-clock-ar-min">--</span></span>
+                            </div>
+                            <div class="board-date" id="board-date-text">-- -- ---</div>
+                            <div class="board-clock" id="board-clock-py" title="Hora local en Paraguay">
+                                <span class="flag" aria-hidden="true">🇵🇾</span>
+                                <span class="time-text tabular-nums"><span id="board-clock-py-hour">--</span><span class="colon-blink">:</span><span id="board-clock-py-min">--</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Main content layout: Ida & Vuelta wait times -->
+                        <div class="board-main">
+                            <div class="board-lane" id="board-lane-ida">
+                                <div class="lane-label">A Encarnación</div>
+                                <div class="lane-time-container">
+                                    <span class="lane-time-value tabular-nums" id="board-time-ida"><span class="skeleton"></span></span>
+                                    <span class="lane-time-unit">MIN</span>
+                                </div>
+                                <div class="lane-status-wrap">
+                                    <span class="lane-status" id="board-status-ida">CALCULANDO...</span>
+                                </div>
+                            </div>
+                            
+                            <div class="board-divider" aria-hidden="true"></div>
+
+                            <div class="board-lane" id="board-lane-vuelta">
+                                <div class="lane-label">A Posadas</div>
+                                <div class="lane-time-container">
+                                    <span class="lane-time-value tabular-nums" id="board-time-vuelta"><span class="skeleton"></span></span>
+                                    <span class="lane-time-unit">MIN</span>
+                                </div>
+                                <div class="lane-status-wrap">
+                                    <span class="lane-status" id="board-status-vuelta">CALCULANDO...</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bottom section: scrolling ticker -->
+                        <div class="board-ticker" aria-live="off">
+                            <div class="ticker-wrap">
+                                <div class="ticker-text" id="board-ticker-text">OBTENIENDO INFORMACIÓN DE TRÁNSITO...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bridge-viewer" id="bridge-viewer">
+                    <div class="bridge-viewer-skeleton" id="bridge-skeleton">
+                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"
+                            aria-hidden="true">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <path d="m21 15-5-5L5 21" />
+                        </svg>
+                    </div>
+                    <img class="bridge-img" id="img-agil" data-src="/static/images/puente-agil.webp" alt=""
+                        loading="lazy" decoding="async">
+                    <img class="bridge-img" id="img-moderado" data-src="/static/images/puente-moderado.webp" alt=""
+                        loading="lazy" decoding="async">
+                    <img class="bridge-img" id="img-cargado" data-src="/static/images/puente-cargado.webp" alt=""
+                        loading="lazy" decoding="async">
+                    <img class="bridge-img" id="img-colapsado" data-src="/static/images/puente-colapsado.webp" alt=""
+                        loading="lazy" decoding="async">
+                    <div class="bridge-viewer-overlay">
+                        <span class="bridge-viewer-label" id="bridge-caption">Imagen representativa · No refleja el
+                            estado actual</span>
+                    </div>
+                </div>
+
+
+                <div class="error-message" id="error-box" role="alert"></div>
+            </div>
+
+            <!-- ===== TAB: ALERTAS ===== -->
+            <!-- TODO (Perfiles): Cuando se implemente el sistema de perfiles de usuario,
+                 la configuración de alertas (dirección, umbral, suscripción push) debería
+                 guardarse por perfil en lugar de en localStorage + DB anónima.
+                 Este tab pasaría a ser parte de la sección de configuración del perfil. -->
+            <div class="tab-pane" id="tab-alertas" role="tabpanel" aria-labelledby="btn-alertas" hidden>
+                <div class="alert-tab-header">
+                    <h2 class="alert-tab-title">Alertas de Tráfico</h2>
+                    <p class="alert-tab-desc">Recibí notificaciones push en tu dispositivo cuando el tiempo de cruce
+                        supere el umbral que decidas.</p>
+                </div>
+
                 <!-- Panel de Alertas Web Push -->
                 <div class="alert-settings-card" id="alert-settings">
                     <div class="alert-header">
                         <div class="alert-title-group">
                             <span class="alert-icon">🔔</span>
                             <div class="alert-text-container">
-                                <h3 class="alert-title">Alertas de Tráfico</h3>
-                                    <p class="alert-description">Recibí notificaciones en vivo cuando el puente supere el límite de demora.</p>
-                                    <p class="alert-summary" id="alert-summary" hidden></p>
+                                <h3 class="alert-title">Notificaciones Push</h3>
+                                <p class="alert-description">Activá las alertas para recibir avisos en vivo.</p>
+                                <p class="alert-summary" id="alert-summary" hidden></p>
                             </div>
                         </div>
                         <label class="switch" aria-label="Activar alertas de tráfico">
@@ -105,7 +174,7 @@
                             <span class="slider round"></span>
                         </label>
                     </div>
-                    
+
                     <div class="alert-options" id="alert-options" style="display: none;">
                         <div class="alert-option-row">
                             <div class="alert-label-group">
@@ -118,65 +187,30 @@
                                 <option value="ambas">Ambas direcciones</option>
                             </select>
                         </div>
-                        
+
                         <div class="alert-option-row">
                             <div class="alert-label-group">
                                 <label for="alert-threshold" class="alert-label">Límite de tiempo</label>
                                 <span class="alert-hint">Notificar cuando la espera supere los minutos indicados</span>
                             </div>
                             <div class="alert-input-container">
-                                <input type="number" id="alert-threshold" class="alert-input" value="60" min="15" max="300" step="5">
+                                <input type="number" id="alert-threshold" class="alert-input" value="60" min="15"
+                                    max="300" step="5">
                                 <span class="alert-input-suffix">minutos</span>
                             </div>
                         </div>
-                        
+
                         <div class="alert-actions">
-                            <button type="button" id="alert-save-btn" class="alert-btn primary">Guardar Configuración</button>
+                            <button type="button" id="alert-save-btn" class="alert-btn primary">Guardar
+                                Configuración</button>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="routes-grid">
-                    <div class="route-card" id="card-ida">
-                        <div class="route-header">
-                            <div class="route-name">Posadas ➔ Encarnación</div>
-                            <span class="congestion-badge" id="badge-ida"></span>
-                        </div>
-                        <div class="route-time tabular-nums" id="time-ida">
-                            <div class="skeleton"></div>
-                        </div>
-                        <p class="route-hint" id="hint-ida"></p>
-                    </div>
-                    <div class="route-card" id="card-vuelta">
-                        <div class="route-header">
-                            <div class="route-name">Encarnación ➔ Posadas</div>
-                            <span class="congestion-badge" id="badge-vuelta"></span>
-                        </div>
-                        <div class="route-time tabular-nums" id="time-vuelta">
-                            <div class="skeleton"></div>
-                        </div>
-                        <p class="route-hint" id="hint-vuelta"></p>
-                    </div>
-                </div>
-                <div class="bridge-viewer" id="bridge-viewer">
-                    <div class="bridge-viewer-skeleton" id="bridge-skeleton">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5" aria-hidden="true">
-                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <path d="m21 15-5-5L5 21" />
-                        </svg>
-                    </div>
-                    <img class="bridge-img" id="img-agil" data-src="/static/images/puente-agil.webp" alt="" loading="lazy" decoding="async">
-                    <img class="bridge-img" id="img-moderado" data-src="/static/images/puente-moderado.webp" alt="" loading="lazy" decoding="async">
-                    <img class="bridge-img" id="img-cargado" data-src="/static/images/puente-cargado.webp" alt="" loading="lazy" decoding="async">
-                    <img class="bridge-img" id="img-colapsado" data-src="/static/images/puente-colapsado.webp" alt="" loading="lazy" decoding="async">
-                    <div class="bridge-viewer-overlay">
-                        <span class="bridge-viewer-label" id="bridge-caption">Imagen representativa · No refleja el estado actual</span>
                     </div>
                 </div>
 
-                
-                <div class="error-message" id="error-box" role="alert"></div>
+                <div class="alert-unsupported-note" id="alert-unsupported-note" hidden>
+                    <p>Tu navegador no soporta notificaciones push. Intentá desde Chrome o Edge en Android/escritorio.
+                    </p>
+                </div>
             </div>
 
             <div class="tab-pane" id="tab-clima" role="tabpanel" aria-labelledby="btn-clima" hidden>
@@ -192,9 +226,18 @@
                         <div class="weather-desc" id="w-desc">Cargando clima...</div>
                         <table class="weather-details" aria-label="Detalles del clima">
                             <tbody>
-                                <tr><th scope="row">Sensación</th><td class="tabular-nums" id="w-feels">--°</td></tr>
-                                <tr><th scope="row">Humedad</th><td class="tabular-nums" id="w-humidity">--%</td></tr>
-                                <tr><th scope="row">Viento</th><td class="tabular-nums" id="w-wind">-- km/h</td></tr>
+                                <tr>
+                                    <th scope="row">Sensación</th>
+                                    <td class="tabular-nums" id="w-feels">--°</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Humedad</th>
+                                    <td class="tabular-nums" id="w-humidity">--%</td>
+                                </tr>
+                                <tr>
+                                    <th scope="row">Viento</th>
+                                    <td class="tabular-nums" id="w-wind">-- km/h</td>
+                                </tr>
                             </tbody>
                         </table>
                     </div>
@@ -224,7 +267,8 @@
                             <div class="conv-row">
                                 <div class="conv-prefixed">
                                     <span class="conv-prefix" id="conv-amount-prefix" aria-hidden="true">U$D</span>
-                                    <input type="number" id="conv-amount" value="100" class="conv-input tabular-nums" min="0" step="any" inputmode="decimal">
+                                    <input type="number" id="conv-amount" value="100" class="conv-input tabular-nums"
+                                        min="0" step="any" inputmode="decimal">
                                 </div>
                                 <select id="conv-from" class="conv-select" aria-label="Moneda origen">
                                     <option value="USD">USD (Dólar Blue)</option>
@@ -234,8 +278,12 @@
                             </div>
                         </div>
                         <div class="conv-swap-wrap">
-                            <button type="button" class="icon-btn conv-swap-btn" id="conv-swap" aria-label="Intercambiar monedas">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12m0 0l4-4m-4 4l-4-4"/></svg>
+                            <button type="button" class="icon-btn conv-swap-btn" id="conv-swap"
+                                aria-label="Intercambiar monedas">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" aria-hidden="true">
+                                    <path d="M7 16V4M7 4L3 8M7 4l4 4M17 8v12m0 0l4-4m-4 4l-4-4" />
+                                </svg>
                             </button>
                         </div>
                         <div class="conv-field">
@@ -286,31 +334,83 @@
                     <details class="accordion">
                         <summary>Gobierno y Migraciones</summary>
                         <div class="links-group">
-                            <a href="https://www.argentina.gob.ar/interior/migraciones" target="_blank" rel="noopener noreferrer">Migraciones Argentina <span class="ext-icon" aria-hidden="true">↗</span></a>
-                            <a href="https://www.migraciones.gov.py" target="_blank" rel="noopener noreferrer">Migraciones Paraguay <span class="ext-icon" aria-hidden="true">↗</span></a>
-                            <a href="https://www.argentina.gob.ar/seguridad/pasosinternacionales" target="_blank" rel="noopener noreferrer">Pasos Internacionales <span class="ext-icon" aria-hidden="true">↗</span></a>
-                            <a href="https://www.afip.gob.ar" target="_blank" rel="noopener noreferrer">Aduana Argentina (AFIP) <span class="ext-icon" aria-hidden="true">↗</span></a>
-                            <a href="https://www.aduana.gov.py" target="_blank" rel="noopener noreferrer">Aduanas Paraguay (DNA) <span class="ext-icon" aria-hidden="true">↗</span></a>
+                            <a href="https://www.argentina.gob.ar/interior/migraciones" target="_blank"
+                                rel="noopener noreferrer">Migraciones Argentina <span class="ext-icon"
+                                    aria-hidden="true">↗</span></a>
+                            <a href="https://www.migraciones.gov.py" target="_blank"
+                                rel="noopener noreferrer">Migraciones Paraguay <span class="ext-icon"
+                                    aria-hidden="true">↗</span></a>
+                            <a href="https://www.argentina.gob.ar/seguridad/pasosinternacionales" target="_blank"
+                                rel="noopener noreferrer">Pasos Internacionales <span class="ext-icon"
+                                    aria-hidden="true">↗</span></a>
+                            <a href="https://www.afip.gob.ar" target="_blank" rel="noopener noreferrer">Aduana Argentina
+                                (AFIP) <span class="ext-icon" aria-hidden="true">↗</span></a>
+                            <a href="https://www.aduana.gov.py" target="_blank" rel="noopener noreferrer">Aduanas
+                                Paraguay (DNA) <span class="ext-icon" aria-hidden="true">↗</span></a>
                         </div>
                     </details>
                     <details class="accordion">
                         <summary>Medios Locales</summary>
                         <div class="links-group">
-                            <a href="https://www.elterritorio.com.ar" target="_blank" rel="noopener noreferrer">El Territorio <span class="ext-icon" aria-hidden="true">↗</span></a>
-                            <a href="https://www.primeraedicion.com.ar" target="_blank" rel="noopener noreferrer">Primera Edición <span class="ext-icon" aria-hidden="true">↗</span></a>
-                            <a href="https://www.abc.com.py" target="_blank" rel="noopener noreferrer">ABC Color (Paraguay) <span class="ext-icon" aria-hidden="true">↗</span></a>
-                            <a href="https://www.ultimahora.com" target="_blank" rel="noopener noreferrer">Última Hora (Paraguay) <span class="ext-icon" aria-hidden="true">↗</span></a>
+                            <a href="https://www.elterritorio.com.ar" target="_blank" rel="noopener noreferrer">El
+                                Territorio <span class="ext-icon" aria-hidden="true">↗</span></a>
+                            <a href="https://www.primeraedicion.com.ar" target="_blank"
+                                rel="noopener noreferrer">Primera Edición <span class="ext-icon"
+                                    aria-hidden="true">↗</span></a>
+                            <a href="https://www.abc.com.py" target="_blank" rel="noopener noreferrer">ABC Color
+                                (Paraguay) <span class="ext-icon" aria-hidden="true">↗</span></a>
+                            <a href="https://www.ultimahora.com" target="_blank" rel="noopener noreferrer">Última Hora
+                                (Paraguay) <span class="ext-icon" aria-hidden="true">↗</span></a>
                         </div>
                     </details>
                     <details class="accordion">
                         <summary>Otras Herramientas</summary>
                         <div class="links-group">
-                            <a href="https://www.argentina.gob.ar/transporte/trenes-argentinos" target="_blank" rel="noopener noreferrer">Trenes Argentinos <span class="ext-icon" aria-hidden="true">↗</span></a>
+                            <a href="https://www.argentina.gob.ar/transporte/trenes-argentinos" target="_blank"
+                                rel="noopener noreferrer">Trenes Argentinos <span class="ext-icon"
+                                    aria-hidden="true">↗</span></a>
                         </div>
                     </details>
                 </div>
             </div>
         </main>
+
+        <nav class="tab-nav" role="tablist" aria-label="Secciones principales">
+            <button class="tab-btn active" data-tab="trafico" role="tab" aria-selected="true"
+                aria-controls="tab-trafico" id="btn-trafico" tabindex="0">
+                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                    <circle cx="7" cy="17" r="2" />
+                    <circle cx="17" cy="17" r="2" />
+                </svg>
+                <span class="tab-label">Tráfico</span>
+            </button>
+            <button class="tab-btn" data-tab="alertas" role="tab" aria-selected="false" aria-controls="tab-alertas"
+                id="btn-alertas" tabindex="-1">
+                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                <span class="tab-label">Alertas</span>
+            </button>
+            <button class="tab-btn" data-tab="clima" role="tab" aria-selected="false" aria-controls="tab-clima"
+                id="btn-clima" tabindex="-1">
+                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                    <circle cx="12" cy="12" r="4" />
+                </svg>
+                <span class="tab-label">Clima</span>
+            </button>
+            <button class="tab-btn" data-tab="info" role="tab" aria-selected="false" aria-controls="tab-info"
+                id="btn-info" tabindex="-1">
+                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="16" x2="12" y2="12" />
+                    <line x1="12" y1="8" x2="12.01" y2="8" />
+                </svg>
+                <span class="tab-label">Info</span>
+            </button>
+        </nav>
 
         <section class="ads-section" aria-label="Espacio publicitario">
             <p class="ad-label">Espacio publicitario — <a href="mailto:sbardemadrian@gmail.com">Anunciá aquí</a></p>
@@ -320,8 +420,9 @@
                     width="1024" height="534" loading="lazy" decoding="async">
             </aside>
             <div class="ad-space" id="ad-container">
-            <script async="async" data-cfasync="false" src="https://pl29487784.effectivecpmnetwork.com/50f09ddb979407af1832957c7f55167e/invoke.js"></script>
-            <div id="container-50f09ddb979407af1832957c7f55167e"></div>
+                <script async="async" data-cfasync="false"
+                    src="https://pl29487784.effectivecpmnetwork.com/50f09ddb979407af1832957c7f55167e/invoke.js"></script>
+                <div id="container-50f09ddb979407af1832957c7f55167e"></div>
             </div>
         </section>
 
@@ -332,15 +433,23 @@
                 <span class="stale-warning" id="stale-warning" hidden> · Datos desactualizados</span>
             </div>
             <div class="status-actions">
-                <button type="button" class="icon-btn icon-btn-sm" id="btn-refresh" title="Actualizar ahora" aria-label="Actualizar datos de tráfico">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                <button type="button" class="icon-btn icon-btn-sm" id="btn-refresh" title="Actualizar ahora"
+                    aria-label="Actualizar datos de tráfico">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        aria-hidden="true">
+                        <path d="M23 4v6h-6" />
+                        <path d="M1 20v-6h6" />
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                    </svg>
                 </button>
                 <button type="button" class="text-btn" id="btn-retry" hidden>Reintentar</button>
                 <span class="last-update tabular-nums" id="last-update">--:--</span>
             </div>
         </footer>
-        <div class="attribution">Tráfico: <a href="https://www.waze.com" target="_blank" rel="noopener noreferrer">Waze</a> ·
-            Clima: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> (CC BY 4.0) ·
+        <div class="attribution">Tráfico: <a href="https://www.waze.com" target="_blank"
+                rel="noopener noreferrer">Waze</a> ·
+            Clima: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> (CC BY
+            4.0) ·
             Hecho por Adrián Sbardella · <a href="mailto:sbardemadrian@gmail.com">E-Mail</a></div>
     </div>
 

@@ -473,6 +473,18 @@ def update_traffic_data():
             )
 
             # --- Procesamiento de Alertas Web Push ---
+            # KNOWN BUG: Las notificaciones reales no están llegando aunque /api/push/test
+            # funciona. Investigar:
+            #   1. get_vapid_private_key_for_webpush() puede retornar el path del archivo
+            #      PEM en local/fallback, que pywebpush acepta como ruta. Verificar que en
+            #      producción (Render) la DB esté activa y la clave se obtenga como string.
+            #   2. DB_RUNTIME_DISABLED puede activarse en el hilo de background sin contexto
+            #      Flask, haciendo que load_subscriptions() devuelva [].
+            #   3. last_notified_value=None en el primer ciclo hace skip implícito —
+            #      revisar si esto impide el primer disparo cuando el umbral ya está superado.
+            # TODO (Perfiles): Mover la lógica de suscripciones a perfiles de usuario
+            # cuando se implemente autenticación. Cada perfil tendrá su propio endpoint,
+            # umbral y dirección preferida.
             try:
                 m_ida = int(round(tiempo_ida))
                 m_vuelta = int(round(tiempo_vuelta))

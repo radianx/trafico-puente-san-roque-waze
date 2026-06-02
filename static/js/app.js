@@ -11,7 +11,7 @@ const WMO = {
 const DAY_NAMES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
 const STALE_MINUTES = 15;
 const NORMAL_RANGE = '25–45 min';
-const TAB_LABELS = { trafico: 'Tráfico', clima: 'Clima', info: 'Info' };
+const TAB_LABELS = { trafico: 'Tráfico', alertas: 'Alertas', clima: 'Clima', info: 'Info' };
 const congestionOrder = ['agil','moderado','cargado','colapsado'];
 const CURRENCY_PREFIX = { USD: 'U$D', ARS: 'AR$', PYG: 'PY₲' };
 const BRIDGE_ALTS = {
@@ -25,6 +25,28 @@ let prevMIda = null;
 let prevMVuelta = null;
 let lastTrafficData = null;
 let bridgeImagesLoaded = new Set();
+
+// === Ticker Data Cache ===
+const tickerData = {
+    traffic: 'CARGANDO ESTADO DEL TRÁNSITO...',
+    train: 'CARGANDO ESTADO DEL TREN...',
+    weather: 'CARGANDO CLIMA...',
+    rates: 'CARGANDO COTIZACIONES...'
+};
+
+function renderTicker() {
+    const el = document.getElementById('board-ticker-text');
+    if (!el) return;
+    const parts = [
+        tickerData.traffic,
+        tickerData.train,
+        tickerData.weather,
+        tickerData.rates
+    ];
+    const separator = '   •   ';
+    const msg = parts.filter(Boolean).join(separator).toUpperCase();
+    el.textContent = msg + separator + msg;
+}
 
 // === Toast ===
 function showToast(message, type = 'info', duration = 4500) {
@@ -55,6 +77,22 @@ function activateTab(btn) {
         p.hidden = !active;
     });
     document.getElementById('tab-announcer').textContent = `Mostrando: ${TAB_LABELS[tabId]}`;
+
+    // Hide or show the traffic summary depending on active tab
+    const summary = document.getElementById('traffic-summary');
+    if (summary) {
+        if (tabId === 'trafico') {
+            summary.hidden = true;
+        } else {
+            if (lastTrafficData) {
+                const mI = extractMinutes(lastTrafficData.ida_encarnacion);
+                const mV = extractMinutes(lastTrafficData.vuelta_posadas);
+                summary.hidden = (mI === null || mV === null || isNaN(mI) || isNaN(mV));
+            } else {
+                summary.hidden = true;
+            }
+        }
+    }
 }
 
 tabButtons.forEach((btn, i) => {
@@ -80,8 +118,36 @@ function updateClockAndTrain() {
     const fmtPY = new Intl.DateTimeFormat('es-PY', { timeZone: 'America/Asuncion', hour: '2-digit', minute: '2-digit', hour12: false });
     const arTime = fmtAR.format(now);
     const pyTime = fmtPY.format(now);
-    document.getElementById('clock-ar-text').textContent = arTime;
-    document.getElementById('clock-py-text').textContent = pyTime;
+    
+    // Update digital board clocks
+    const arHourEl = document.getElementById('board-clock-ar-hour');
+    const arMinEl = document.getElementById('board-clock-ar-min');
+    const arParts = arTime.split(':');
+    if (arHourEl && arMinEl && arParts.length === 2) {
+        arHourEl.textContent = arParts[0];
+        arMinEl.textContent = arParts[1];
+    }
+    
+    const pyHourEl = document.getElementById('board-clock-py-hour');
+    const pyMinEl = document.getElementById('board-clock-py-min');
+    const pyParts = pyTime.split(':');
+    if (pyHourEl && pyMinEl && pyParts.length === 2) {
+        pyHourEl.textContent = pyParts[0];
+        pyMinEl.textContent = pyParts[1];
+    }
+
+    // Format and update retro date (e.g. LUN 01 JUN)
+    const dateFmt = new Intl.DateTimeFormat('es-AR', {
+        timeZone: 'America/Argentina/Cordoba',
+        weekday: 'short',
+        day: '2-digit',
+        month: 'short'
+    });
+    const dateStr = dateFmt.format(now).replace(',', '').toUpperCase();
+    const dateEl = document.getElementById('board-date-text');
+    if (dateEl) {
+        dateEl.textContent = dateStr;
+    }
 
     const arDateParts = new Intl.DateTimeFormat('en', {
         timeZone: 'America/Argentina/Cordoba', hour: 'numeric', minute: 'numeric', weekday: 'short', hour12: false
@@ -93,23 +159,22 @@ function updateClockAndTrain() {
         if (p.type === 'minute') minute = parseInt(p.value, 10);
     });
 
-    const trainDot = document.getElementById('train-dot');
-    const trainStatus = document.getElementById('train-status');
     const isWeekend = ['Sat', 'Sun'].includes(weekday);
     const currentMins = hour * 60 + minute;
     const trainStart = 7 * 60;
     const trainEnd = 18 * 60 + 30;
 
+    let trainMsg = '';
     if (isWeekend) {
-        trainDot.className = 'qb-dot off';
-        trainStatus.textContent = 'No opera hoy';
+        trainMsg = 'TREN: NO OPERA HOY';
     } else if (currentMins >= trainStart && currentMins <= trainEnd) {
-        trainDot.className = 'qb-dot on';
-        trainStatus.textContent = 'En servicio';
+        trainMsg = 'TREN: EN SERVICIO (07:15 A 18:30)';
     } else {
-        trainDot.className = 'qb-dot off';
-        trainStatus.textContent = 'Fuera de horario';
+        trainMsg = 'TREN: FUERA DE HORARIO';
     }
+    
+    tickerData.train = trainMsg;
+    renderTicker();
 }
 updateClockAndTrain();
 setInterval(updateClockAndTrain, 30000);
@@ -168,7 +233,12 @@ function updateTrafficSummary(mI, mV) {
         summary.hidden = true;
         return;
     }
-    summary.hidden = false;
+    
+    // Hide summary if we are on the 'trafico' tab
+    const activeBtn = document.querySelector('.tab-btn.active');
+    const isTrafico = activeBtn ? activeBtn.dataset.tab === 'trafico' : true;
+    summary.hidden = isTrafico;
+    
     document.getElementById('ts-ida').textContent = `Ida ${mI} min`;
     document.getElementById('ts-vuelta').textContent = `Vuelta ${mV} min`;
 
@@ -211,15 +281,44 @@ function renderTrafficSuccess(data) {
     const mI = extractMinutes(data.ida_encarnacion);
     const mV = extractMinutes(data.vuelta_posadas);
 
-    document.getElementById('time-ida').innerHTML = `${mI}<span>min</span>`;
-    document.getElementById('time-vuelta').innerHTML = `${mV}<span>min</span>`;
-    setRouteHint('hint-ida', mI, prevMIda);
-    setRouteHint('hint-vuelta', mV, prevMVuelta);
+    // Update wait times in the digital board
+    const valIda = document.getElementById('board-time-ida');
+    const valVuelta = document.getElementById('board-time-vuelta');
+    if (valIda) valIda.textContent = (mI !== null && !isNaN(mI)) ? mI : '--';
+    if (valVuelta) valVuelta.textContent = (mV !== null && !isNaN(mV)) ? mV : '--';
 
-    applyCongestion('card-ida', 'badge-ida', mI);
-    applyCongestion('card-vuelta', 'badge-vuelta', mV);
+    // Update congestion levels on lanes
+    const laneIda = document.getElementById('board-lane-ida');
+    const laneVuelta = document.getElementById('board-lane-vuelta');
+    const levelIda = getCongestionLevel(mI);
+    const levelVuelta = getCongestionLevel(mV);
+
+    if (laneIda) laneIda.className = 'board-lane' + (levelIda.level ? ' ' + levelIda.level : '');
+    if (laneVuelta) laneVuelta.className = 'board-lane' + (levelVuelta.level ? ' ' + levelVuelta.level : '');
+
+    // Update lane statuses
+    const statusIda = document.getElementById('board-status-ida');
+    const statusVuelta = document.getElementById('board-status-vuelta');
+    if (statusIda) statusIda.textContent = levelIda.label || 'DESCONOCIDO';
+    if (statusVuelta) statusVuelta.textContent = levelVuelta.label || 'DESCONOCIDO';
+
     updateBridgeImage(mI, mV);
     updateTrafficSummary(mI, mV);
+
+    // Format changes/deltas for the scrolling ticker tape
+    let deltaIda = '';
+    if (prevMIda !== null && mI !== null && prevMIda !== mI) {
+        const diff = mI - prevMIda;
+        deltaIda = ` (${diff > 0 ? '+' : ''}${diff} MIN)`;
+    }
+    let deltaVuelta = '';
+    if (prevMVuelta !== null && mV !== null && prevMVuelta !== mV) {
+        const diff = mV - prevMVuelta;
+        deltaVuelta = ` (${diff > 0 ? '+' : ''}${diff} MIN)`;
+    }
+
+    tickerData.traffic = `🚗 TRÁNSITO EN VIVO: IDA ${mI !== null ? mI : '--'} MIN - ${levelIda.label || 'S/D'}${deltaIda} • VUELTA ${mV !== null ? mV : '--'} MIN - ${levelVuelta.label || 'S/D'}${deltaVuelta}`;
+    renderTicker();
 
     prevMIda = mI;
     prevMVuelta = mV;
@@ -363,6 +462,10 @@ async function fetchWeather(manual = false) {
         document.getElementById('w-feels').textContent = Math.round(c.apparent_temperature) + '°';
         document.getElementById('w-humidity').textContent = c.relative_humidity_2m + '%';
         document.getElementById('w-wind').textContent = Math.round(c.wind_speed_10m) + ' km/h';
+        
+        tickerData.weather = `🌦️ CLIMA: ${Math.round(c.temperature_2m)}°C (${wmo.d})`;
+        renderTicker();
+        
         setWeatherLoading(false);
 
         const grid = document.getElementById('forecast-grid');
@@ -388,6 +491,8 @@ async function fetchWeather(manual = false) {
         console.error('Weather error:', e);
         setWeatherLoading(false);
         document.getElementById('w-desc').textContent = 'Error al cargar clima';
+        tickerData.weather = '🌦️ CLIMA: S/D';
+        renderTicker();
         showToast('No se pudo cargar el clima. Intentá más tarde.', 'error');
         const grid = document.getElementById('forecast-grid');
         if (grid && !grid.querySelector('.forecast-card')) {
@@ -440,12 +545,17 @@ async function fetchRates() {
             `1 USD = $${convRates.ARS} ARS · 1 USD = ₲${Math.round(convRates.PYG).toLocaleString('es-AR')} PYG` +
             `<br><span class="conv-meta">Cotización al ${timeStr}. Ref: Dólar Blue (AR) y divisa intl. (PY).</span>`;
 
+        tickerData.rates = `💵 COTIZACIONES: 1 USD = $${convRates.ARS} ARS · ₲${Math.round(convRates.PYG).toLocaleString('es-AR')} PYG`;
+        renderTicker();
+
         document.getElementById('conv-result').classList.remove('is-loading');
         updateConversion();
     } catch (e) {
         console.error('Rates error:', e);
         document.getElementById('conv-rates').textContent =
             'No se pudieron obtener las cotizaciones.';
+        tickerData.rates = '💵 COTIZACIONES: S/D';
+        renderTicker();
         document.getElementById('conv-result').classList.remove('is-loading');
         document.getElementById('conv-result-value').textContent = '--';
         document.getElementById('conv-retry').hidden = false;
@@ -499,6 +609,23 @@ if ('serviceWorker' in navigator) {
 }
 
 // === Web Push Notifications Logic ===
+//
+// KNOWN BUG: El endpoint /api/push/test funciona correctamente (notificación de prueba
+// llega al dispositivo), pero las notificaciones reales que se disparan desde el loop
+// de tráfico en app.py NO están llegando. Posibles causas a investigar:
+//   1. La función get_vapid_private_key_for_webpush() devuelve el path del archivo PEM
+//      cuando DB está desactivada, pero pywebpush puede estar interpretándolo distinto
+//      entre el endpoint /test (que llama a send_push_notification directamente) y el
+//      hilo de background (que corre sin contexto Flask).
+//   2. Verificar que DB_RUNTIME_DISABLED no se active silenciosamente en producción,
+//      haciendo que load_subscriptions() devuelva lista vacía en el hilo background.
+//   3. Revisar que last_notified_value se esté inicializando correctamente y no bloquee
+//      el primer disparo de la alerta.
+//
+// TODO (Perfiles): Cuando se implemente el sistema de perfiles, mover la configuración
+// de alertas (dirección, umbral, endpoint push) al perfil del usuario en lugar de
+// localStorage anónimo + DB sin identidad. Ver también el comentario en index.html.
+
 let isSubscribed = false;
 let activeSubscription = null;
 
@@ -526,9 +653,12 @@ function initPushNotifications() {
 
     if (!alertSettings) return;
 
+    const unsupportedNote = document.getElementById('alert-unsupported-note');
+
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        // Web Push no soportado
+        // Web Push no soportado en este navegador — ocultar el formulario y mostrar nota
         alertSettings.style.display = 'none';
+        if (unsupportedNote) unsupportedNote.hidden = false;
         return;
     }
 
