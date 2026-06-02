@@ -768,12 +768,6 @@ body {
     max-width: 65ch
 }
 
-.alert-summary {
-    font-size: 0.75rem;
-    color: var(--text-dim);
-    margin-top: 0.15rem;
-}
-
 .schedule-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
