@@ -1,4 +1,4 @@
-const CACHE = 'puente-v2';
+const CACHE = 'puente-v3';
 const PRECACHE = ['/static/css/style.css', '/static/js/app.js'];
 
 self.addEventListener('install', (e) => {
