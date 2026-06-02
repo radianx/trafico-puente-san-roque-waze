@@ -82,6 +82,18 @@ def init_db():
                         updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                     );
                 """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS traffic_readings (
+                        id             SERIAL PRIMARY KEY,
+                        recorded_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        ida_minutes    NUMERIC(5,1),
+                        vuelta_minutes NUMERIC(5,1)
+                    );
+                """)
+                cur.execute("""
+                    CREATE INDEX IF NOT EXISTS traffic_readings_recorded_at_idx
+                        ON traffic_readings (recorded_at DESC);
+                """)
             conn.commit()
     except Exception as exc:
         DB_RUNTIME_DISABLED = True
@@ -487,6 +499,22 @@ def update_traffic_data():
                 trafico_cache["ida_encarnacion"],
                 trafico_cache["vuelta_posadas"],
             )
+
+            # --- Persistir lectura histórica ---
+            if db_enabled():
+                try:
+                    with db_conn() as conn:
+                        with conn.cursor() as cur:
+                            cur.execute(
+                                """
+                                INSERT INTO traffic_readings (recorded_at, ida_minutes, vuelta_minutes)
+                                VALUES (NOW(), %s, %s);
+                                """,
+                                (round(tiempo_ida, 1), round(tiempo_vuelta, 1)),
+                            )
+                        conn.commit()
+                except Exception as ex:
+                    logging.error("Error al guardar lectura histórica: %s", ex)
 
             # --- Procesamiento de Alertas Web Push ---
             try:
