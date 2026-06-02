@@ -1,4 +1,4 @@
-const CACHE = 'puente-v1';
+const CACHE = 'puente-v2';
 const PRECACHE = ['/static/css/style.css', '/static/js/app.js'];
 
 self.addEventListener('install', (e) => {
@@ -29,14 +29,16 @@ self.addEventListener('fetch', (e) => {
     return;
   }
   if (url.pathname.startsWith('/static/')) {
+    // Stale-while-revalidate: serve from cache immediately (fast), but always
+    // fetch + update the cache in the background so stale assets never get stuck.
     e.respondWith(
-      caches.match(e.request).then((cached) =>
-        cached || fetch(e.request).then((res) => {
-          if (res.ok) {
-            const clone = res.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, clone));
-          }
-          return res;
+      caches.open(CACHE).then((cache) =>
+        cache.match(e.request).then((cached) => {
+          const networkFetch = fetch(e.request).then((res) => {
+            if (res.ok) cache.put(e.request, res.clone());
+            return res;
+          });
+          return cached || networkFetch;
         })
       )
     );
