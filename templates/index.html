@@ -120,24 +120,46 @@
                             </div>
                         </div>
 
-                        <!-- Board footer: share button & cafecito -->
+                        <!-- Board footer: status + actions -->
                         <div class="board-footer">
-                            <button type="button" class="board-share-btn" id="btn-share-board"
-                                title="Compartir estado del puente"
-                                aria-label="Compartir estado del puente">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                    stroke-width="2" aria-hidden="true">
-                                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
-                                    <polyline points="16 6 12 2 8 6" />
-                                    <line x1="12" y1="2" x2="12" y2="15" />
-                                </svg>
-                                <span>Compartir</span>
-                            </button>
-                            <a href='https://cafecito.app/puentehoy' rel='noopener' target='_blank' class="cafecito-btn" aria-label="Invitame un café en cafecito.app">
-                                <img srcset='https://cdn.cafecito.app/imgs/buttons/button_3.png 1x, https://cdn.cafecito.app/imgs/buttons/button_3_2x.png 2x, https://cdn.cafecito.app/imgs/buttons/button_3_3.75x.png 3.75x'
-                                    src='https://cdn.cafecito.app/imgs/buttons/button_3.png'
-                                    alt='Invitame un café en cafecito.app' />
-                            </a>
+                            <div class="board-status-row">
+                                <div class="board-status-left">
+                                    <span class="status-dot initializing" id="status-dot" aria-hidden="true"></span>
+                                    <span id="status-text">Conectando...</span>
+                                    <span class="stale-warning" id="stale-warning" hidden> · Datos desactualizados</span>
+                                </div>
+                                <div class="board-status-right">
+                                    <span class="last-update tabular-nums" id="last-update">--:--</span>
+                                    <button type="button" class="board-refresh-btn" id="btn-refresh" title="Actualizar ahora"
+                                        aria-label="Actualizar datos de tráfico">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                                            aria-hidden="true">
+                                            <path d="M23 4v6h-6" />
+                                            <path d="M1 20v-6h6" />
+                                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                        </svg>
+                                    </button>
+                                    <button type="button" class="text-btn" id="btn-retry" hidden>Reintentar</button>
+                                </div>
+                            </div>
+                            <div class="board-actions-row">
+                                <button type="button" class="board-share-btn" id="btn-share-board"
+                                    title="Compartir estado del puente"
+                                    aria-label="Compartir estado del puente">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2" aria-hidden="true">
+                                        <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                                        <polyline points="16 6 12 2 8 6" />
+                                        <line x1="12" y1="2" x2="12" y2="15" />
+                                    </svg>
+                                    <span>Compartir</span>
+                                </button>
+                                <a href='https://cafecito.app/puentehoy' rel='noopener' target='_blank' class="cafecito-btn" aria-label="Invitame un café en cafecito.app">
+                                    <img srcset='https://cdn.cafecito.app/imgs/buttons/button_3.png 1x, https://cdn.cafecito.app/imgs/buttons/button_3_2x.png 2x, https://cdn.cafecito.app/imgs/buttons/button_3_3.75x.png 3.75x'
+                                        src='https://cdn.cafecito.app/imgs/buttons/button_3.png'
+                                        alt='Invitame un café en cafecito.app' />
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -419,26 +441,6 @@
             <div class="ad-space" id="ad-container"></div>
         </section>
 
-        <footer class="status-footer">
-            <div class="status-left">
-                <span class="status-dot initializing" id="status-dot" aria-hidden="true"></span>
-                <span id="status-text">Conectando...</span>
-                <span class="stale-warning" id="stale-warning" hidden> · Datos desactualizados</span>
-            </div>
-            <div class="status-actions">
-                <button type="button" class="icon-btn icon-btn-sm" id="btn-refresh" title="Actualizar ahora"
-                    aria-label="Actualizar datos de tráfico">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                        aria-hidden="true">
-                        <path d="M23 4v6h-6" />
-                        <path d="M1 20v-6h6" />
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
-                    </svg>
-                </button>
-                <button type="button" class="text-btn" id="btn-retry" hidden>Reintentar</button>
-                <span class="last-update tabular-nums" id="last-update">--:--</span>
-            </div>
-        </footer>
         <div class="attribution">Tráfico: <a href="https://www.waze.com" target="_blank"
                 rel="noopener noreferrer">Waze</a> ·
             Clima: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> (CC BY
