@@ -20,6 +20,12 @@ const BRIDGE_ALTS = {
     cargado: 'Puente con tráfico cargado',
     colapsado: 'Puente con tráfico colapsado'
 };
+const BRIDGE_IMAGE_URLS = {
+    agil: '/static/images/puente-agil.webp',
+    moderado: '/static/images/puente-moderado.webp',
+    cargado: '/static/images/puente-cargado.webp',
+    colapsado: '/static/images/puente-colapsado.webp'
+};
 
 let prevMIda = null;
 let prevMVuelta = null;
@@ -239,8 +245,20 @@ function updateTrafficSummary(mI, mV) {
     const isTrafico = activeBtn ? activeBtn.dataset.tab === 'trafico' : true;
     summary.hidden = isTrafico;
     
-    document.getElementById('ts-ida').textContent = `Ida ${mI} min`;
-    document.getElementById('ts-vuelta').textContent = `Vuelta ${mV} min`;
+    const tsIda = document.getElementById('ts-ida');
+    const tsVuelta = document.getElementById('ts-vuelta');
+    const levelIda = getCongestionLevel(mI);
+    const levelVuelta = getCongestionLevel(mV);
+
+    // The digital-board lanes use direction labels "A Encarnación" / "A Posadas"
+    if (tsIda) {
+        tsIda.textContent = `A Encarnación ${mI} min`;
+        tsIda.className = 'ts-item' + (levelIda.level ? ' ' + levelIda.level : '');
+    }
+    if (tsVuelta) {
+        tsVuelta.textContent = `A Posadas ${mV} min`;
+        tsVuelta.className = 'ts-item' + (levelVuelta.level ? ' ' + levelVuelta.level : '');
+    }
 
     const worstInfo = getCongestionLevel(Math.max(mI, mV));
     const worstEl = document.getElementById('ts-worst');
@@ -248,33 +266,25 @@ function updateTrafficSummary(mI, mV) {
     worstEl.className = 'ts-worst ' + worstInfo.level;
 }
 
+function setLaneBackground(laneEl, levelKey) {
+    if (!laneEl || !levelKey) return;
+    const imageUrl = BRIDGE_IMAGE_URLS[levelKey];
+    if (!imageUrl) return;
+
+    laneEl.style.setProperty('--lane-bg-image', `url("${imageUrl}")`);
+    laneEl.dataset.bgAlt = BRIDGE_ALTS[levelKey] || 'Vista del puente';
+
+    if (bridgeImagesLoaded.has(levelKey)) return;
+    const preloadImg = new Image();
+    preloadImg.src = imageUrl;
+    bridgeImagesLoaded.add(levelKey);
+}
+
 function updateBridgeImage(mIda, mVuelta) {
-    const idxI = congestionOrder.indexOf(getCongestionLevel(mIda).key);
-    const idxV = congestionOrder.indexOf(getCongestionLevel(mVuelta).key);
-    const worst = idxI >= idxV ? getCongestionLevel(mIda).key : getCongestionLevel(mVuelta).key;
-    if (!worst) return;
-
-    const sk = document.getElementById('bridge-skeleton');
-    const target = document.getElementById('img-' + worst);
-    const showActive = () => {
-        if (sk) sk.style.display = 'none';
-        document.querySelectorAll('.bridge-img').forEach((img) => img.classList.remove('active'));
-        if (target) target.classList.add('active');
-    };
-
-    if (target && !target.getAttribute('src') && target.dataset.src) {
-        target.onload = showActive;
-        target.src = target.dataset.src;
-        target.alt = BRIDGE_ALTS[worst] || 'Vista del puente';
-        bridgeImagesLoaded.add(worst);
-    } else {
-        showActive();
-    }
-
-    document.getElementById('bridge-viewer').className = 'bridge-viewer glow-' + worst;
-    const info = getCongestionLevel(Math.max(mIda, mVuelta));
-    document.getElementById('bridge-caption').textContent =
-        `Tráfico ${info.label.toLowerCase()} · Imagen representativa`;
+    const levelIda = getCongestionLevel(mIda);
+    const levelVuelta = getCongestionLevel(mVuelta);
+    setLaneBackground(document.getElementById('board-lane-ida'), levelIda.key);
+    setLaneBackground(document.getElementById('board-lane-vuelta'), levelVuelta.key);
 }
 
 function renderTrafficSuccess(data) {
@@ -317,7 +327,7 @@ function renderTrafficSuccess(data) {
         deltaVuelta = ` (${diff > 0 ? '+' : ''}${diff} MIN)`;
     }
 
-    tickerData.traffic = `🚗 TRÁNSITO EN VIVO: IDA ${mI !== null ? mI : '--'} MIN - ${levelIda.label || 'S/D'}${deltaIda} • VUELTA ${mV !== null ? mV : '--'} MIN - ${levelVuelta.label || 'S/D'}${deltaVuelta}`;
+    tickerData.traffic = `🚗 TRÁNSITO EN VIVO: A ENCARNACIÓN ${mI !== null ? mI : '--'} MIN - ${levelIda.label || 'S/D'}${deltaIda} • A POSADAS ${mV !== null ? mV : '--'} MIN - ${levelVuelta.label || 'S/D'}${deltaVuelta}`;
     renderTicker();
 
     prevMIda = mI;
@@ -430,6 +440,7 @@ async function shareStatus() {
 }
 
 document.getElementById('btn-share').addEventListener('click', shareStatus);
+document.getElementById('btn-share-board').addEventListener('click', shareStatus);
 
 // === Weather ===
 function setWeatherLoading(loading) {

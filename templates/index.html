@@ -43,15 +43,15 @@
         <header class="header">
             <h1>Puente San Roque González</h1>
             <p class="header-tagline">Tiempos de cruce en vivo</p>
-            <div class="subtitle" aria-label="Posadas Argentina y Encarnación Paraguay">Posadas 🇦🇷 ↔ Encarnación 🇵🇾
+            <div class="subtitle" aria-label="Posadas Argentina y Encarnación Paraguay">🇵🇾 Encarnación ↔ Posadas 🇦🇷
             </div>
         </header>
 
         <div class="traffic-summary" id="traffic-summary" aria-label="Resumen de tráfico" hidden>
             <div class="ts-main">
-                <span class="ts-item" id="ts-ida">Ida --</span>
+                <span class="ts-item" id="ts-ida">A Encarnación -- min</span>
                 <span class="ts-sep" aria-hidden="true">·</span>
-                <span class="ts-item" id="ts-vuelta">Vuelta --</span>
+                <span class="ts-item" id="ts-vuelta">A Posadas -- min</span>
                 <span class="ts-worst" id="ts-worst"></span>
             </div>
             <button type="button" class="icon-btn icon-btn-share" id="btn-share" title="Compartir estado"
@@ -73,14 +73,14 @@
                     <div class="board-bezel">
                         <!-- Top display bar: clocks & date -->
                         <div class="board-header">
-                            <div class="board-clock" id="board-clock-ar" title="Hora local en Argentina">
-                                <span class="flag" aria-hidden="true">🇦🇷</span>
-                                <span class="time-text tabular-nums"><span id="board-clock-ar-hour">--</span><span class="colon-blink">:</span><span id="board-clock-ar-min">--</span></span>
-                            </div>
-                            <div class="board-date" id="board-date-text">-- -- ---</div>
                             <div class="board-clock" id="board-clock-py" title="Hora local en Paraguay">
                                 <span class="flag" aria-hidden="true">🇵🇾</span>
                                 <span class="time-text tabular-nums"><span id="board-clock-py-hour">--</span><span class="colon-blink">:</span><span id="board-clock-py-min">--</span></span>
+                            </div>
+                            <div class="board-date" id="board-date-text">-- -- ---</div>
+                            <div class="board-clock" id="board-clock-ar" title="Hora local en Argentina">
+                                <span class="time-text tabular-nums"><span id="board-clock-ar-hour">--</span><span class="colon-blink">:</span><span id="board-clock-ar-min">--</span></span>
+                                <span class="flag" aria-hidden="true">🇦🇷</span>
                             </div>
                         </div>
 
@@ -117,32 +117,23 @@
                                 <div class="ticker-text" id="board-ticker-text">OBTENIENDO INFORMACIÓN DE TRÁNSITO...</div>
                             </div>
                         </div>
+
+                        <!-- Board footer: share button -->
+                        <div class="board-footer">
+                            <button type="button" class="board-share-btn" id="btn-share-board"
+                                title="Compartir estado del puente"
+                                aria-label="Compartir estado del puente">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2" aria-hidden="true">
+                                    <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+                                    <polyline points="16 6 12 2 8 6" />
+                                    <line x1="12" y1="2" x2="12" y2="15" />
+                                </svg>
+                                <span>Compartir</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
-                <div class="bridge-viewer" id="bridge-viewer">
-                    <div class="bridge-viewer-skeleton" id="bridge-skeleton">
-                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.5"
-                            aria-hidden="true">
-                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <path d="m21 15-5-5L5 21" />
-                        </svg>
-                    </div>
-                    <img class="bridge-img" id="img-agil" data-src="/static/images/puente-agil.webp" alt=""
-                        loading="lazy" decoding="async">
-                    <img class="bridge-img" id="img-moderado" data-src="/static/images/puente-moderado.webp" alt=""
-                        loading="lazy" decoding="async">
-                    <img class="bridge-img" id="img-cargado" data-src="/static/images/puente-cargado.webp" alt=""
-                        loading="lazy" decoding="async">
-                    <img class="bridge-img" id="img-colapsado" data-src="/static/images/puente-colapsado.webp" alt=""
-                        loading="lazy" decoding="async">
-                    <div class="bridge-viewer-overlay">
-                        <span class="bridge-viewer-label" id="bridge-caption">Imagen representativa · No refleja el
-                            estado actual</span>
-                    </div>
-                </div>
-
-
                 <div class="error-message" id="error-box" role="alert"></div>
             </div>
 
