@@ -1939,14 +1939,28 @@ input:checked+.slider:before {
     position: relative;
 }
 
-/* Board footer with share button */
+/* Board footer with share + cafecito buttons */
 .board-footer {
     display: flex;
     justify-content: center;
     align-items: center;
+    gap: 0.6rem;
     padding: 0.55rem 1rem;
     background: #000;
     border-top: 1px solid #1e293b;
+}
+
+.cafecito-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.cafecito-btn img {
+    display: block;
+    height: 32px;
+    width: auto;
 }
 
 .board-share-btn {
@@ -1954,7 +1968,7 @@ input:checked+.slider:before {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    width: 100%;
+    flex: 1;
     padding: 0.45rem 1rem;
     background: transparent;
     border: 1px solid rgba(245, 158, 11, 0.35);
