@@ -620,22 +620,6 @@ if ('serviceWorker' in navigator) {
 }
 
 // === Web Push Notifications Logic ===
-//
-// KNOWN BUG: El endpoint /api/push/test funciona correctamente (notificación de prueba
-// llega al dispositivo), pero las notificaciones reales que se disparan desde el loop
-// de tráfico en app.py NO están llegando. Posibles causas a investigar:
-//   1. La función get_vapid_private_key_for_webpush() devuelve el path del archivo PEM
-//      cuando DB está desactivada, pero pywebpush puede estar interpretándolo distinto
-//      entre el endpoint /test (que llama a send_push_notification directamente) y el
-//      hilo de background (que corre sin contexto Flask).
-//   2. Verificar que DB_RUNTIME_DISABLED no se active silenciosamente en producción,
-//      haciendo que load_subscriptions() devuelva lista vacía en el hilo background.
-//   3. Revisar que last_notified_value se esté inicializando correctamente y no bloquee
-//      el primer disparo de la alerta.
-//
-// TODO (Perfiles): Cuando se implemente el sistema de perfiles, mover la configuración
-// de alertas (dirección, umbral, endpoint push) al perfil del usuario en lugar de
-// localStorage anónimo + DB sin identidad. Ver también el comentario en index.html.
 
 let isSubscribed = false;
 let activeSubscription = null;

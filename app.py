@@ -188,6 +188,12 @@ def fetch_vapid_public_key():
 
 
 def get_vapid_private_key_for_webpush():
+    """
+    Returns the VAPID private key in the format pywebpush expects:
+    - A base64url-encoded DER string (when loaded from DB)
+    - A file path to the PEM file (when using local fallback)
+    pywebpush's Vapid.from_string() expects DER base64url, NOT a PEM string.
+    """
     if db_enabled():
         with db_conn() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -195,7 +201,17 @@ def get_vapid_private_key_for_webpush():
                 row = cur.fetchone()
                 if not row:
                     raise RuntimeError("VAPID private key not found in DB")
-                return row["private_key_pem"]
+        # Convert PEM → DER → base64url (what pywebpush's Vapid.from_string expects)
+        private_key = serialization.load_pem_private_key(
+            row["private_key_pem"].encode("utf-8"),
+            password=None,
+        )
+        der_bytes = private_key.private_bytes(
+            encoding=serialization.Encoding.DER,
+            format=serialization.PrivateFormat.PKCS8,
+            encryption_algorithm=serialization.NoEncryption(),
+        )
+        return base64.urlsafe_b64encode(der_bytes).decode("utf-8")
     return PRIVATE_KEY_FILE
 
 
@@ -473,18 +489,6 @@ def update_traffic_data():
             )
 
             # --- Procesamiento de Alertas Web Push ---
-            # KNOWN BUG: Las notificaciones reales no están llegando aunque /api/push/test
-            # funciona. Investigar:
-            #   1. get_vapid_private_key_for_webpush() puede retornar el path del archivo
-            #      PEM en local/fallback, que pywebpush acepta como ruta. Verificar que en
-            #      producción (Render) la DB esté activa y la clave se obtenga como string.
-            #   2. DB_RUNTIME_DISABLED puede activarse en el hilo de background sin contexto
-            #      Flask, haciendo que load_subscriptions() devuelva [].
-            #   3. last_notified_value=None en el primer ciclo hace skip implícito —
-            #      revisar si esto impide el primer disparo cuando el umbral ya está superado.
-            # TODO (Perfiles): Mover la lógica de suscripciones a perfiles de usuario
-            # cuando se implemente autenticación. Cada perfil tendrá su propio endpoint,
-            # umbral y dirección preferida.
             try:
                 m_ida = int(round(tiempo_ida))
                 m_vuelta = int(round(tiempo_vuelta))
