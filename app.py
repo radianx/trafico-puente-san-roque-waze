@@ -20,6 +20,12 @@ except Exception:
     Json = None
     RealDictCursor = None
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 PRIVATE_KEY_FILE = "private_key.pem"
 PUBLIC_KEY_FILE = "public_key.txt"
 SUBSCRIPTIONS_FILE = "subscriptions.json"
@@ -93,6 +99,19 @@ def init_db():
                 cur.execute("""
                     CREATE INDEX IF NOT EXISTS traffic_readings_recorded_at_idx
                         ON traffic_readings (recorded_at DESC);
+                """)
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS bridge_visuals (
+                        id             SERIAL PRIMARY KEY,
+                        recorded_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                        direction      TEXT NOT NULL,
+                        penalty_minutes INTEGER NOT NULL DEFAULT 0,
+                        raw_json       JSONB
+                    );
+                """)
+                cur.execute("""
+                    CREATE INDEX IF NOT EXISTS bridge_visuals_recorded_at_idx
+                        ON bridge_visuals (recorded_at DESC);
                 """)
             conn.commit()
     except Exception as exc:
@@ -487,6 +506,29 @@ def update_traffic_data():
 
             tiempo_ida = tiempo_ida_raw
             tiempo_vuelta = tiempo_vuelta_raw
+
+            # --- Vision Penalty Integration ---
+            if db_enabled():
+                try:
+                    with db_conn() as conn:
+                        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                            # Get latest penalty for ida (Posadas -> Encarnacion)
+                            cur.execute(
+                                "SELECT penalty_minutes FROM bridge_visuals WHERE direction = 'Posadas_to_Encarnacion' ORDER BY recorded_at DESC LIMIT 1;"
+                            )
+                            res_ida = cur.fetchone()
+                            if res_ida:
+                                tiempo_ida += res_ida['penalty_minutes']
+                            
+                            # Get latest penalty for vuelta (Encarnacion -> Posadas)
+                            cur.execute(
+                                "SELECT penalty_minutes FROM bridge_visuals WHERE direction = 'Encarnacion_to_Posadas' ORDER BY recorded_at DESC LIMIT 1;"
+                            )
+                            res_vuelta = cur.fetchone()
+                            if res_vuelta:
+                                tiempo_vuelta += res_vuelta['penalty_minutes']
+                except Exception as ex:
+                    logging.error("Error al obtener penalizaciones de visión: %s", ex)
 
             trafico_cache["ida_encarnacion"] = f"{tiempo_ida:.0f}min"
             trafico_cache["vuelta_posadas"] = f"{tiempo_vuelta:.0f}min"
