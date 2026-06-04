@@ -26,6 +26,12 @@ const BRIDGE_IMAGE_URLS = {
     cargado: '/static/images/puente-cargado.webp',
     colapsado: '/static/images/puente-colapsado.webp'
 };
+const BRIDGE_IMAGE_URLS_IDA = {
+    agil: '/static/images/puente-agil.webp',
+    moderado: '/static/images/puente-moderado.webp',
+    cargado: '/static/images/aduana-argentina-posadas.webp',
+    colapsado: '/static/images/puente-colapsado.webp'
+};
 
 let prevMIda = null;
 let prevMVuelta = null;
@@ -276,25 +282,27 @@ function updateTrafficSummary(mI, mV) {
     worstEl.className = 'ts-worst ' + worstInfo.level;
 }
 
-function setLaneBackground(laneEl, levelKey) {
+function setLaneBackground(laneEl, levelKey, imageMap) {
     if (!laneEl || !levelKey) return;
-    const imageUrl = BRIDGE_IMAGE_URLS[levelKey];
+    const urls = imageMap || BRIDGE_IMAGE_URLS;
+    const imageUrl = urls[levelKey];
     if (!imageUrl) return;
 
     laneEl.style.setProperty('--lane-bg-image', `url("${imageUrl}")`);
     laneEl.dataset.bgAlt = BRIDGE_ALTS[levelKey] || 'Vista del puente';
 
-    if (bridgeImagesLoaded.has(levelKey)) return;
+    const cacheKey = imageUrl;
+    if (bridgeImagesLoaded.has(cacheKey)) return;
     const preloadImg = new Image();
     preloadImg.src = imageUrl;
-    bridgeImagesLoaded.add(levelKey);
+    bridgeImagesLoaded.add(cacheKey);
 }
 
 function updateBridgeImage(mIda, mVuelta) {
     const levelIda = getCongestionLevel(mIda);
     const levelVuelta = getCongestionLevel(mVuelta);
-    setLaneBackground(document.getElementById('board-lane-ida'), levelIda.key);
-    setLaneBackground(document.getElementById('board-lane-vuelta'), levelVuelta.key);
+    setLaneBackground(document.getElementById('board-lane-ida'), levelIda.key, BRIDGE_IMAGE_URLS_IDA);
+    setLaneBackground(document.getElementById('board-lane-vuelta'), levelVuelta.key, BRIDGE_IMAGE_URLS);
 }
 
 function renderTrafficSuccess(data) {
