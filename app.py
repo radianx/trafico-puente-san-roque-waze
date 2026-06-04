@@ -466,9 +466,15 @@ def build_og_meta():
     cache = trafico_cache
     og_image = f"{base}/og-image.webp"
 
+    # Static title for <title> tag — Google indexes this as the main link text.
+    # Must NOT contain dynamic values that become stale between crawls.
+    page_title = "Tráfico Puente Posadas-Encarnación en Vivo | PuenteHoy"
+
     if cache.get("status") == "success":
         ida = cache.get("ida_encarnacion", "--")
         vuelta = cache.get("vuelta_posadas", "--")
+        # Dynamic og:title — only used for social sharing previews (WhatsApp,
+        # Twitter, etc.) which re-fetch on every share, so values stay fresh.
         og_title = f"Puente en vivo: {ida} ida · {vuelta} vuelta"
         og_description = (
             f"Posadas → Encarnación: {ida}. "
@@ -483,6 +489,7 @@ def build_og_meta():
         )
 
     return {
+        "page_title": page_title,
         "og_title": og_title,
         "og_description": og_description,
         "og_image": og_image,
@@ -779,6 +786,11 @@ def og_image_static():
 def get_trafico():
     """Endpoint principal de la API para devolver los tiempos de viaje"""
     return jsonify(trafico_cache)
+
+
+@app.route('/favicon.ico')
+def favicon():
+    return app.send_static_file('favicon.ico')
 
 
 @app.route('/manifest.json')

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ og_title }}</title>
+    <title>{{ page_title }}</title>
     <meta name="description" content="{{ og_description }}">
     <meta property="og:site_name" content="Tráfico Puente San Roque">
     <meta property="og:title" content="{{ og_title }}">
@@ -22,12 +22,17 @@
     <meta name="twitter:description" content="{{ og_description }}">
     <meta name="twitter:image" content="{{ og_image }}">
     <meta name="theme-color" content="#0f172a">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;600;700&display=swap" rel="stylesheet">
     <link rel="canonical" href="{{ og_url }}">
     <meta name="robots" content="index, follow">
-    <meta name="keywords" content="puente posadas encarnacion, trafico puente posadas encarnacion, estado del puente posadas encarnacion hoy, cola puente posadas encarnacion, tren posadas encarnacion, paso de frontera posadas, cruce posadas encarnacion, cotizacion guarani peso, puente san roque gonzalez">
+    <meta name="keywords"
+        content="puente posadas encarnacion, trafico puente posadas encarnacion, estado del puente posadas encarnacion hoy, cola puente posadas encarnacion, tren posadas encarnacion, paso de frontera posadas, cruce posadas encarnacion, cotizacion guarani peso, puente san roque gonzalez">
     <link rel="stylesheet" href="/static/css/style.css">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2113733617849351"
         crossorigin="anonymous"></script>
@@ -94,8 +99,10 @@
 
     <div class="app">
         <header class="header">
-            <h1>Puente San Roque González</h1>
-            <p class="header-tagline">Tiempos de cruce en vivo</p>
+            <div class="header-logo-container">
+                <img src="/static/images/puenteHoyTransparente.png" alt="Logo PuenteHoy" class="header-logo">
+            </div>
+            <p class="header-tagline">Puente San Roque González - Tiempos de cruce en vivo</p>
             <div class="subtitle" aria-label="Posadas Argentina y Encarnación Paraguay">🇵🇾 Encarnación ↔ Posadas 🇦🇷
             </div>
         </header>
@@ -128,22 +135,28 @@
                         <div class="board-header">
                             <div class="board-clock" id="board-clock-py" title="Hora local en Paraguay">
                                 <span class="flag" aria-hidden="true">🇵🇾</span>
-                                <span class="time-text tabular-nums"><span id="board-clock-py-hour">--</span><span class="colon-blink">:</span><span id="board-clock-py-min">--</span></span>
+                                <span class="time-text tabular-nums"><span id="board-clock-py-hour">--</span><span
+                                        class="colon-blink">:</span><span id="board-clock-py-min">--</span></span>
                             </div>
                             <div class="board-date" id="board-date-text">-- -- ---</div>
                             <div class="board-clock" id="board-clock-ar" title="Hora local en Argentina">
-                                <span class="time-text tabular-nums"><span id="board-clock-ar-hour">--</span><span class="colon-blink">:</span><span id="board-clock-ar-min">--</span></span>
+                                <span class="time-text tabular-nums"><span id="board-clock-ar-hour">--</span><span
+                                        class="colon-blink">:</span><span id="board-clock-ar-min">--</span></span>
                                 <span class="flag" aria-hidden="true">🇦🇷</span>
                             </div>
                         </div>
 
                         <!-- Main content layout: Ida & Vuelta wait times -->
                         <div class="board-main">
-                            <div class="board-lane{% if level_ida_key %} {{ level_ida_key }}{% endif %}" id="board-lane-ida" {% if level_ida_key %}style="--lane-bg-image: url('/static/images/puente-{{ level_ida_key }}.webp')" data-bg-alt="Puente con tráfico {{ level_ida_label | lower }}"{% endif %}>
+                            <div class="board-lane{% if level_ida_key %} {{ level_ida_key }}{% endif %}"
+                                id="board-lane-ida" {% if level_ida_key
+                                %}style="--lane-bg-image: url('/static/images/puente-{{ level_ida_key }}.webp')"
+                                data-bg-alt="Puente con tráfico {{ level_ida_label | lower }}" {% endif %}>
                                 <div class="lane-label">A Encarnación</div>
                                 <div class="lane-time-container">
                                     <span class="lane-time-value tabular-nums" id="board-time-ida">
-                                        {% if ida_encarnacion_raw is not none %}{{ ida_encarnacion_raw }}{% else %}<span class="skeleton"></span>{% endif %}
+                                        {% if ida_encarnacion_raw is not none %}{{ ida_encarnacion_raw }}{% else %}<span
+                                            class="skeleton"></span>{% endif %}
                                     </span>
                                     <span class="lane-time-unit">MIN</span>
                                 </div>
@@ -151,14 +164,18 @@
                                     <span class="lane-status" id="board-status-ida">{{ status_ida }}</span>
                                 </div>
                             </div>
-                            
+
                             <div class="board-divider" aria-hidden="true"></div>
 
-                            <div class="board-lane{% if level_vuelta_key %} {{ level_vuelta_key }}{% endif %}" id="board-lane-vuelta" {% if level_vuelta_key %}style="--lane-bg-image: url('/static/images/puente-{{ level_vuelta_key }}.webp')" data-bg-alt="Puente con tráfico {{ level_vuelta_label | lower }}"{% endif %}>
+                            <div class="board-lane{% if level_vuelta_key %} {{ level_vuelta_key }}{% endif %}"
+                                id="board-lane-vuelta" {% if level_vuelta_key
+                                %}style="--lane-bg-image: url('/static/images/puente-{{ level_vuelta_key }}.webp')"
+                                data-bg-alt="Puente con tráfico {{ level_vuelta_label | lower }}" {% endif %}>
                                 <div class="lane-label">A Posadas</div>
                                 <div class="lane-time-container">
                                     <span class="lane-time-value tabular-nums" id="board-time-vuelta">
-                                        {% if vuelta_posadas_raw is not none %}{{ vuelta_posadas_raw }}{% else %}<span class="skeleton"></span>{% endif %}
+                                        {% if vuelta_posadas_raw is not none %}{{ vuelta_posadas_raw }}{% else %}<span
+                                            class="skeleton"></span>{% endif %}
                                     </span>
                                     <span class="lane-time-unit">MIN</span>
                                 </div>
@@ -181,17 +198,19 @@
                                 <div class="board-status-left">
                                     <span class="status-dot initializing" id="status-dot" aria-hidden="true"></span>
                                     <span id="status-text">Conectando...</span>
-                                    <span class="stale-warning" id="stale-warning" hidden> · Datos desactualizados</span>
+                                    <span class="stale-warning" id="stale-warning" hidden> · Datos
+                                        desactualizados</span>
                                 </div>
                                 <div class="board-status-right">
                                     <span class="last-update tabular-nums" id="last-update">--:--</span>
-                                    <button type="button" class="board-refresh-btn" id="btn-refresh" title="Actualizar ahora"
-                                        aria-label="Actualizar datos de tráfico">
-                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
-                                            aria-hidden="true">
+                                    <button type="button" class="board-refresh-btn" id="btn-refresh"
+                                        title="Actualizar ahora" aria-label="Actualizar datos de tráfico">
+                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none"
+                                            stroke="currentColor" stroke-width="2.5" aria-hidden="true">
                                             <path d="M23 4v6h-6" />
                                             <path d="M1 20v-6h6" />
-                                            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+                                            <path
+                                                d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
                                         </svg>
                                     </button>
                                     <button type="button" class="text-btn" id="btn-retry" hidden>Reintentar</button>
@@ -199,8 +218,7 @@
                             </div>
                             <div class="board-actions-row">
                                 <button type="button" class="board-share-btn" id="btn-share-board"
-                                    title="Compartir estado del puente"
-                                    aria-label="Compartir estado del puente">
+                                    title="Compartir estado del puente" aria-label="Compartir estado del puente">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                                         stroke-width="2" aria-hidden="true">
                                         <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
@@ -209,7 +227,8 @@
                                     </svg>
                                     <span>Compartir</span>
                                 </button>
-                                <a href='https://cafecito.app/puentehoy' rel='noopener' target='_blank' class="cafecito-btn" aria-label="Invitame un café en cafecito.app">
+                                <a href='https://cafecito.app/puentehoy' rel='noopener' target='_blank'
+                                    class="cafecito-btn" aria-label="Invitame un café en cafecito.app">
                                     <img srcset='https://cdn.cafecito.app/imgs/buttons/button_3.png 1x, https://cdn.cafecito.app/imgs/buttons/button_3_2x.png 2x, https://cdn.cafecito.app/imgs/buttons/button_3_3.75x.png 3.75x'
                                         src='https://cdn.cafecito.app/imgs/buttons/button_3.png'
                                         alt='Invitame un café en cafecito.app' />
@@ -265,7 +284,8 @@
                         <div class="alert-option-row">
                             <div class="alert-label-group">
                                 <label for="alert-threshold" class="alert-label">Límite de tiempo</label>
-                                <span class="alert-hint">Umbral de alerta — recibís aviso al superar y al volver a la normalidad</span>
+                                <span class="alert-hint">Umbral de alerta — recibís aviso al superar y al volver a la
+                                    normalidad</span>
                             </div>
                             <div class="alert-input-container">
                                 <input type="number" id="alert-threshold" class="alert-input" value="60" min="15"
@@ -339,7 +359,8 @@
             <div class="tab-pane" id="tab-info" role="tabpanel" aria-labelledby="btn-info" hidden>
                 <div class="alert-tab-header">
                     <h2 class="alert-tab-title">Información del Puente</h2>
-                    <p class="alert-tab-desc">Conversor de moneda, horarios del tren, enlaces de migración y preguntas frecuentes.</p>
+                    <p class="alert-tab-desc">Conversor de moneda, horarios del tren, enlaces de migración y preguntas
+                        frecuentes.</p>
                 </div>
                 <div class="info-card">
                     <h3>Conversor de Moneda</h3>
@@ -459,25 +480,33 @@
                     <details class="accordion">
                         <summary>¿Cómo ver el estado del puente Posadas-Encarnación en vivo?</summary>
                         <p style="padding: 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
-                            Podés consultar el estado del puente en vivo y los tiempos de espera actualizados en nuestro portal. El sistema calcula en tiempo real la demora para cruzar tanto a Encarnación (Paraguay) como a Posadas (Argentina).
+                            Podés consultar el estado del puente en vivo y los tiempos de espera actualizados en nuestro
+                            portal. El sistema calcula en tiempo real la demora para cruzar tanto a Encarnación
+                            (Paraguay) como a Posadas (Argentina).
                         </p>
                     </details>
                     <details class="accordion">
                         <summary>¿Cuáles son los horarios del Tren Internacional?</summary>
                         <p style="padding: 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
-                            El tren opera de lunes a viernes (excepto feriados nacionales). Las salidas desde Posadas son de 07:15 a 18:15 y desde Encarnación de 07:00 a 18:30. La frecuencia es de 15 a 30 minutos y el viaje demora unos 8 minutos.
+                            El tren opera de lunes a viernes (excepto feriados nacionales). Las salidas desde Posadas
+                            son de 07:15 a 18:15 y desde Encarnación de 07:00 a 18:30. La frecuencia es de 15 a 30
+                            minutos y el viaje demora unos 8 minutos.
                         </p>
                     </details>
                     <details class="accordion">
                         <summary>¿Qué documentos se necesitan para cruzar la frontera?</summary>
                         <p style="padding: 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
-                            Se requiere DNI digital tarjeta o Pasaporte vigente. Los menores de edad necesitan partida de nacimiento o autorización legal. Para cruzar en auto, debés presentar cédula verde/azul, seguro de cobertura internacional (carta verde) y cristales grabados.
+                            Se requiere DNI digital tarjeta o Pasaporte vigente. Los menores de edad necesitan partida
+                            de nacimiento o autorización legal. Para cruzar en auto, debés presentar cédula verde/azul,
+                            seguro de cobertura internacional (carta verde) y cristales grabados.
                         </p>
                     </details>
                     <details class="accordion">
                         <summary>¿Cómo configurar las alertas automáticas de demora?</summary>
                         <p style="padding: 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
-                            En la pestaña "Alertas" podés activar las notificaciones push en tu navegador. Podés configurar un umbral de tiempo (por ejemplo, 60 minutos) para recibir un aviso cuando la demora supere ese límite y otro cuando se normalice.
+                            En la pestaña "Alertas" podés activar las notificaciones push en tu navegador. Podés
+                            configurar un umbral de tiempo (por ejemplo, 60 minutos) para recibir un aviso cuando la
+                            demora supere ese límite y otro cuando se normalice.
                         </p>
                     </details>
                 </div>
@@ -487,8 +516,10 @@
         <nav class="tab-nav" role="tablist" aria-label="Secciones principales">
             <button class="tab-btn active" data-tab="trafico" role="tab" aria-selected="true"
                 aria-controls="tab-trafico" id="btn-trafico" tabindex="0">
-                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
+                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path
+                        d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" />
                     <circle cx="7" cy="17" r="2" />
                     <circle cx="17" cy="17" r="2" />
                 </svg>
@@ -496,7 +527,8 @@
             </button>
             <button class="tab-btn" data-tab="alertas" role="tab" aria-selected="false" aria-controls="tab-alertas"
                 id="btn-alertas" tabindex="-1">
-                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                     <path d="M13.73 21a2 2 0 0 1-3.46 0" />
                 </svg>
@@ -504,15 +536,18 @@
             </button>
             <button class="tab-btn" data-tab="clima" role="tab" aria-selected="false" aria-controls="tab-clima"
                 id="btn-clima" tabindex="-1">
-                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
+                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path
+                        d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41" />
                     <circle cx="12" cy="12" r="4" />
                 </svg>
                 <span class="tab-label">Clima</span>
             </button>
             <button class="tab-btn" data-tab="info" role="tab" aria-selected="false" aria-controls="tab-info"
                 id="btn-info" tabindex="-1">
-                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <svg class="tab-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <circle cx="12" cy="12" r="10" />
                     <line x1="12" y1="16" x2="12" y2="12" />
                     <line x1="12" y1="8" x2="12.01" y2="8" />

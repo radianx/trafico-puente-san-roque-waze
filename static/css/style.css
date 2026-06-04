@@ -150,6 +150,19 @@ body {
     padding: 1rem 0 0.5rem
 }
 
+.header-logo-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.header-logo {
+    height: 60px;
+    width: auto;
+    object-fit: contain;
+    filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+}
+
 .header h1 {
     font-size: 1.4rem;
     font-weight: 700;

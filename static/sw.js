@@ -1,5 +1,16 @@
-const CACHE = 'puente-v3';
-const PRECACHE = ['/static/css/style.css', '/static/js/app.js'];
+const CACHE = 'puente-v4';
+const PRECACHE = [
+  '/static/css/style.css',
+  '/static/js/app.js',
+  '/static/images/puenteHoyTransparente.png',
+  '/static/images/android-chrome-192x192.png',
+  '/static/images/android-chrome-512x512.png',
+  '/static/images/apple-touch-icon.png',
+  '/static/images/favicon-32x32.png',
+  '/static/images/favicon-16x16.png',
+  '/favicon.ico',
+  '/manifest.json'
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)).then(() => self.skipWaiting()));
@@ -28,7 +39,7 @@ self.addEventListener('fetch', (e) => {
     );
     return;
   }
-  if (url.pathname.startsWith('/static/')) {
+  if (url.pathname.startsWith('/static/') || url.pathname === '/favicon.ico' || url.pathname === '/manifest.json') {
     // Stale-while-revalidate: serve from cache immediately (fast), but always
     // fetch + update the cache in the background so stale assets never get stuck.
     e.respondWith(
@@ -47,9 +58,9 @@ self.addEventListener('fetch', (e) => {
 
 // === Web Push Event Listeners ===
 
-self.addEventListener('push', function(event) {
+self.addEventListener('push', function (event) {
   if (!event.data) return;
-  
+
   try {
     const data = event.data.json();
     const title = data.title || 'Alerta de Tránsito';
@@ -62,7 +73,7 @@ self.addEventListener('push', function(event) {
         url: '/'
       }
     };
-    
+
     event.waitUntil(
       self.registration.showNotification(title, options)
     );
@@ -71,13 +82,13 @@ self.addEventListener('push', function(event) {
   }
 });
 
-self.addEventListener('notificationclick', function(event) {
+self.addEventListener('notificationclick', function (event) {
   event.notification.close();
-  
+
   const targetUrl = '/';
-  
+
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function(clientList) {
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (clientList) {
       // Intentar enfocar una pestaña abierta que corresponda al sitio
       for (const client of clientList) {
         if (client.url.indexOf(targetUrl) !== -1 && 'focus' in client) {
