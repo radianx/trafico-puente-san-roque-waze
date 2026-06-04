@@ -25,9 +25,60 @@
     <link rel="manifest" href="/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;600;700&display=swap" rel="stylesheet">
+    <link rel="canonical" href="{{ og_url }}">
+    <meta name="robots" content="index, follow">
+    <meta name="keywords" content="puente posadas encarnacion, trafico puente posadas encarnacion, estado del puente posadas encarnacion hoy, cola puente posadas encarnacion, tren posadas encarnacion, paso de frontera posadas, cruce posadas encarnacion, cotizacion guarani peso, puente san roque gonzalez">
     <link rel="stylesheet" href="/static/css/style.css">
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2113733617849351"
         crossorigin="anonymous"></script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "¿Cómo ver el estado del puente Posadas-Encarnación en vivo?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Podés consultar el estado del puente en vivo y los tiempos de espera actualizados en nuestro portal. Monitoreamos en tiempo real la demora para cruzar tanto a Encarnación (Paraguay) como a Posadas (Argentina)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cuáles son los horarios del Tren Internacional Posadas-Encarnación?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "El tren opera de lunes a viernes (excepto feriados). Las salidas desde Posadas son de 07:15 a 18:15 y desde Encarnación de 07:00 a 18:30. El cruce demora unos 8 minutos."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Qué documentos se necesitan para cruzar la frontera?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Se requiere DNI digital (tarjeta) o Pasaporte vigente. Los menores de edad necesitan autorización de viaje o partida de nacimiento para acreditar filiación. Los vehículos deben contar con seguro internacional (carta verde) y habilitaciones vigentes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "¿Cómo recibir alertas de demora del puente?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "En la pestaña 'Alertas' de nuestra web podés suscribirte para recibir notificaciones en tiempo real en tu celular cuando el tiempo de cruce supere el límite que configures (ej. 60 minutos)."
+          }
+        }
+      ]
+    }
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "PuenteHoy - Tráfico Puente San Roque González",
+      "url": "{{ og_url }}"
+    }
+    </script>
 </head>
 
 <body>
@@ -88,27 +139,31 @@
 
                         <!-- Main content layout: Ida & Vuelta wait times -->
                         <div class="board-main">
-                            <div class="board-lane" id="board-lane-ida">
+                            <div class="board-lane{% if level_ida_key %} {{ level_ida_key }}{% endif %}" id="board-lane-ida" {% if level_ida_key %}style="--lane-bg-image: url('/static/images/puente-{{ level_ida_key }}.webp')" data-bg-alt="Puente con tráfico {{ level_ida_label | lower }}"{% endif %}>
                                 <div class="lane-label">A Encarnación</div>
                                 <div class="lane-time-container">
-                                    <span class="lane-time-value tabular-nums" id="board-time-ida"><span class="skeleton"></span></span>
+                                    <span class="lane-time-value tabular-nums" id="board-time-ida">
+                                        {% if ida_encarnacion_raw is not none %}{{ ida_encarnacion_raw }}{% else %}<span class="skeleton"></span>{% endif %}
+                                    </span>
                                     <span class="lane-time-unit">MIN</span>
                                 </div>
                                 <div class="lane-status-wrap">
-                                    <span class="lane-status" id="board-status-ida">CALCULANDO...</span>
+                                    <span class="lane-status" id="board-status-ida">{{ status_ida }}</span>
                                 </div>
                             </div>
                             
                             <div class="board-divider" aria-hidden="true"></div>
 
-                            <div class="board-lane" id="board-lane-vuelta">
+                            <div class="board-lane{% if level_vuelta_key %} {{ level_vuelta_key }}{% endif %}" id="board-lane-vuelta" {% if level_vuelta_key %}style="--lane-bg-image: url('/static/images/puente-{{ level_vuelta_key }}.webp')" data-bg-alt="Puente con tráfico {{ level_vuelta_label | lower }}"{% endif %}>
                                 <div class="lane-label">A Posadas</div>
                                 <div class="lane-time-container">
-                                    <span class="lane-time-value tabular-nums" id="board-time-vuelta"><span class="skeleton"></span></span>
+                                    <span class="lane-time-value tabular-nums" id="board-time-vuelta">
+                                        {% if vuelta_posadas_raw is not none %}{{ vuelta_posadas_raw }}{% else %}<span class="skeleton"></span>{% endif %}
+                                    </span>
                                     <span class="lane-time-unit">MIN</span>
                                 </div>
                                 <div class="lane-status-wrap">
-                                    <span class="lane-status" id="board-status-vuelta">CALCULANDO...</span>
+                                    <span class="lane-status" id="board-status-vuelta">{{ status_vuelta }}</span>
                                 </div>
                             </div>
                         </div>
@@ -116,7 +171,7 @@
                         <!-- Bottom section: scrolling ticker -->
                         <div class="board-ticker" aria-live="off">
                             <div class="ticker-wrap">
-                                <div class="ticker-text" id="board-ticker-text">OBTENIENDO INFORMACIÓN DE TRÁNSITO...</div>
+                                <div class="ticker-text" id="board-ticker-text">{{ ticker_text }}</div>
                             </div>
                         </div>
 
@@ -233,6 +288,10 @@
             </div>
 
             <div class="tab-pane" id="tab-clima" role="tabpanel" aria-labelledby="btn-clima" hidden>
+                <div class="alert-tab-header">
+                    <h2 class="alert-tab-title">Estado del Clima</h2>
+                    <p class="alert-tab-desc">Clima actual y pronóstico extendido para Posadas y Encarnación.</p>
+                </div>
                 <div class="weather-current is-loading" id="weather-current">
                     <div class="weather-skeleton-block" id="weather-skeleton">
                         <div class="skeleton skeleton-circle"></div>
@@ -278,6 +337,10 @@
             </div>
 
             <div class="tab-pane" id="tab-info" role="tabpanel" aria-labelledby="btn-info" hidden>
+                <div class="alert-tab-header">
+                    <h2 class="alert-tab-title">Información del Puente</h2>
+                    <p class="alert-tab-desc">Conversor de moneda, horarios del tren, enlaces de migración y preguntas frecuentes.</p>
+                </div>
                 <div class="info-card">
                     <h3>Conversor de Moneda</h3>
                     <div class="converter">
@@ -389,6 +452,33 @@
                                 rel="noopener noreferrer">Trenes Argentinos <span class="ext-icon"
                                     aria-hidden="true">↗</span></a>
                         </div>
+                    </details>
+                </div>
+                <div class="info-card" id="preguntas-frecuentes">
+                    <h3>Preguntas Frecuentes (FAQ)</h3>
+                    <details class="accordion">
+                        <summary>¿Cómo ver el estado del puente Posadas-Encarnación en vivo?</summary>
+                        <p style="padding: 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
+                            Podés consultar el estado del puente en vivo y los tiempos de espera actualizados en nuestro portal. El sistema calcula en tiempo real la demora para cruzar tanto a Encarnación (Paraguay) como a Posadas (Argentina).
+                        </p>
+                    </details>
+                    <details class="accordion">
+                        <summary>¿Cuáles son los horarios del Tren Internacional?</summary>
+                        <p style="padding: 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
+                            El tren opera de lunes a viernes (excepto feriados nacionales). Las salidas desde Posadas son de 07:15 a 18:15 y desde Encarnación de 07:00 a 18:30. La frecuencia es de 15 a 30 minutos y el viaje demora unos 8 minutos.
+                        </p>
+                    </details>
+                    <details class="accordion">
+                        <summary>¿Qué documentos se necesitan para cruzar la frontera?</summary>
+                        <p style="padding: 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
+                            Se requiere DNI digital tarjeta o Pasaporte vigente. Los menores de edad necesitan partida de nacimiento o autorización legal. Para cruzar en auto, debés presentar cédula verde/azul, seguro de cobertura internacional (carta verde) y cristales grabados.
+                        </p>
+                    </details>
+                    <details class="accordion">
+                        <summary>¿Cómo configurar las alertas automáticas de demora?</summary>
+                        <p style="padding: 0.5rem 0; font-size: 0.8rem; color: var(--text-muted); line-height: 1.45;">
+                            En la pestaña "Alertas" podés activar las notificaciones push en tu navegador. Podés configurar un umbral de tiempo (por ejemplo, 60 minutos) para recibir un aviso cuando la demora supere ese límite y otro cuando se normalice.
+                        </p>
                     </details>
                 </div>
             </div>

@@ -490,6 +490,60 @@ def build_og_meta():
     }
 
 
+def extract_minutes_py(s):
+    if not s:
+        return None
+    try:
+        return int(str(s).replace('min', ''))
+    except (ValueError, TypeError):
+        return None
+
+
+def get_congestion_level_py(m):
+    if m is None:
+        return {"level": "", "label": "CALCULANDO...", "emoji": "", "key": ""}
+    if m <= 45:
+        return {"level": "level-agil", "label": "Ágil", "emoji": "🟢", "key": "agil"}
+    elif m <= 90:
+        return {"level": "level-moderado", "label": "Moderado", "emoji": "🟡", "key": "moderado"}
+    elif m <= 120:
+        return {"level": "level-cargado", "label": "Cargado", "emoji": "🟠", "key": "cargado"}
+    else:
+        return {"level": "level-colapsado", "label": "Colapsado", "emoji": "🔴", "key": "colapsado"}
+
+
+def build_index_context():
+    context = build_og_meta()
+    cache = trafico_cache
+    
+    ida_raw = cache.get("ida_encarnacion")
+    vuelta_raw = cache.get("vuelta_posadas")
+    
+    ida_mins = extract_minutes_py(ida_raw)
+    vuelta_mins = extract_minutes_py(vuelta_raw)
+    
+    level_ida = get_congestion_level_py(ida_mins)
+    level_vuelta = get_congestion_level_py(vuelta_mins)
+    
+    context["ida_encarnacion_raw"] = ida_mins
+    context["vuelta_posadas_raw"] = vuelta_mins
+    context["status_ida"] = level_ida["label"]
+    context["status_vuelta"] = level_vuelta["label"]
+    context["level_ida_key"] = level_ida["key"]
+    context["level_vuelta_key"] = level_vuelta["key"]
+    context["level_ida_label"] = level_ida["label"]
+    context["level_vuelta_label"] = level_vuelta["label"]
+    
+    if cache.get("status") == "success":
+        ticker_text = f"🚗 TRÁNSITO EN VIVO: A ENCARNACIÓN {ida_mins if ida_mins is not None else '--'} MIN - {level_ida['label'].upper()} • A POSADAS {vuelta_mins if vuelta_mins is not None else '--'} MIN - {level_vuelta['label'].upper()}"
+    else:
+        ticker_text = "OBTENIENDO INFORMACIÓN DE TRÁNSITO..."
+        
+    context["ticker_text"] = ticker_text
+    return context
+
+
+
 def update_traffic_data():
     """Función que corre en segundo plano y actualiza el caché continuamente"""
     global trafico_cache
@@ -684,7 +738,33 @@ def start_background_updater():
 @app.route('/', methods=['GET'])
 def index():
     """Ruta para el microfrontend en smartphone (render.com)"""
-    return render_template('index.html', **build_og_meta())
+    return render_template('index.html', **build_index_context())
+
+
+@app.route('/sitemap.xml', methods=['GET'])
+def sitemap():
+    base = site_base_url()
+    xml = f"""<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>{base}/</loc>
+        <changefreq>always</changefreq>
+        <priority>1.0</priority>
+    </url>
+</urlset>"""
+    response = app.response_class(xml, mimetype='application/xml')
+    return response
+
+
+@app.route('/robots.txt', methods=['GET'])
+def robots():
+    base = site_base_url()
+    text = f"""User-agent: *
+Allow: /
+
+Sitemap: {base}/sitemap.xml"""
+    response = app.response_class(text, mimetype='text/plain')
+    return response
 
 
 @app.route('/og-image.webp', methods=['GET'])
