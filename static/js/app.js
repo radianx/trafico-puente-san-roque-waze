@@ -31,6 +31,10 @@ let prevMIda = null;
 let prevMVuelta = null;
 let lastTrafficData = null;
 let bridgeImagesLoaded = new Set();
+let weatherFetched = false;
+let ratesFetched = false;
+let weatherIntervalId = null;
+let ratesIntervalId = null;
 
 // === Ticker Data Cache ===
 const tickerData = {
@@ -71,6 +75,12 @@ const tabPanes = Array.from(document.querySelectorAll('.tab-pane'));
 
 function activateTab(btn) {
     const tabId = btn.dataset.tab;
+    if (tabId === 'clima' && !weatherFetched) {
+        fetchWeather();
+    }
+    if (tabId === 'info' && !ratesFetched) {
+        fetchRates();
+    }
     tabButtons.forEach((b) => {
         const selected = b === btn;
         b.classList.toggle('active', selected);
@@ -452,6 +462,10 @@ function setWeatherLoading(loading) {
 }
 
 async function fetchWeather(manual = false) {
+    weatherFetched = true;
+    if (!weatherIntervalId) {
+        weatherIntervalId = setInterval(fetchWeather, 30 * 60 * 1000);
+    }
     setWeatherLoading(true);
     const skRow = document.getElementById('forecast-skeleton');
     if (skRow) skRow.style.display = 'flex';
@@ -511,8 +525,7 @@ async function fetchWeather(manual = false) {
         }
     }
 }
-fetchWeather();
-setInterval(fetchWeather, 30 * 60 * 1000);
+// Initial weather call deferred to post-load/tab click.
 
 // === Currency ===
 const convRates = { USD: 1, ARS: 1, PYG: 1 };
@@ -534,6 +547,10 @@ function setConvLoading(loading) {
 }
 
 async function fetchRates() {
+    ratesFetched = true;
+    if (!ratesIntervalId) {
+        ratesIntervalId = setInterval(fetchRates, 60 * 60 * 1000);
+    }
     setConvLoading(true);
     document.getElementById('conv-retry').hidden = true;
 
@@ -609,8 +626,7 @@ document.getElementById('conv-swap').addEventListener('click', () => {
     updateConversion();
 });
 
-fetchRates();
-setInterval(fetchRates, 60 * 60 * 1000);
+// Initial rates call deferred to post-load/tab click.
 
 // === PWA service worker — register early so SW is ready before push logic ===
 if ('serviceWorker' in navigator) {
@@ -802,3 +818,21 @@ function initPushNotifications() {
 initPushNotifications();
 
 // (service worker already registered above, before push init)
+
+// === Defer Loading of Non-Critical Resources & Ads ===
+window.addEventListener('load', () => {
+    // 1. Defer non-critical background data fetching (weather & exchange rates) by 2 seconds
+    setTimeout(() => {
+        if (!weatherFetched) fetchWeather();
+        if (!ratesFetched) fetchRates();
+    }, 2000);
+
+    // 2. Defer Google AdSense injection by 3 seconds to keep main thread completely clear on load
+    setTimeout(() => {
+        const adScript = document.createElement('script');
+        adScript.src = "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2113733617849351";
+        adScript.crossOrigin = "anonymous";
+        adScript.async = true;
+        document.head.appendChild(adScript);
+    }, 3000);
+});

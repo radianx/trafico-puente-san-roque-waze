@@ -27,15 +27,20 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/static/images/favicon-16x16.png">
     <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
     <link rel="manifest" href="/manifest.json">
+    {% if level_ida_key %}
+    <link rel="preload" as="image" href="/static/images/puente-{{ level_ida_key }}.webp" fetchpriority="high">
+    {% endif %}
+    {% if level_vuelta_key %}
+    <link rel="preload" as="image" href="/static/images/puente-{{ level_vuelta_key }}.webp" fetchpriority="high">
+    {% endif %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;600;700&display=swap" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;600;700&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
     <link rel="canonical" href="{{ og_url }}">
     <meta name="robots" content="index, follow">
     <meta name="keywords"
         content="puente posadas encarnacion, trafico puente posadas encarnacion, estado del puente posadas encarnacion hoy, cola puente posadas encarnacion, tren posadas encarnacion, paso de frontera posadas, cruce posadas encarnacion, cotizacion guarani peso, puente san roque gonzalez">
     <link rel="stylesheet" href="/static/css/style.css">
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2113733617849351"
-        crossorigin="anonymous"></script>
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -100,7 +105,7 @@
     <div class="app">
         <header class="header">
             <div class="header-logo-container">
-                <img src="/static/images/puenteHoyTransparente.png" alt="Logo PuenteHoy" class="header-logo">
+                <img src="/static/images/puenteHoyTransparente.webp" alt="Logo PuenteHoy" class="header-logo" width="685" height="320">
             </div>
             <p class="header-tagline">Puente San Roque González - Tiempos de cruce en vivo</p>
             <div class="subtitle" aria-label="Posadas Argentina y Encarnación Paraguay">🇵🇾 Encarnación ↔ Posadas 🇦🇷
@@ -559,7 +564,7 @@
         <section class="ads-section" aria-label="Espacio publicitario">
             <p class="ad-label">Espacio publicitario — <a href="mailto:sbardemadrian@gmail.com">Anunciá aquí</a></p>
             <aside class="sponsored-banner" aria-label="Publicidad">
-                <img src="/static/images/banner-pereira-marino.jpg"
+                <img src="/static/images/banner-pereira-marino.webp"
                     alt="Carlos Pereira Intendente y Marino Concejal — Lista 4, Opción 5. ¡Adelante Encarnación!"
                     width="1024" height="534" loading="lazy" decoding="async">
             </aside>
