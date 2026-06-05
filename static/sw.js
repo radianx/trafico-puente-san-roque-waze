@@ -1,4 +1,4 @@
-const CACHE = 'puente-v5';
+const CACHE = 'puente-v6';
 const PRECACHE = [
   '/static/css/style.css',
   '/static/js/app.js',

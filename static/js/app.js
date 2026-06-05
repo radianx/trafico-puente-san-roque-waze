@@ -1,18 +1,18 @@
 // === Constants ===
 const WMO = {
-    0:{d:'Despejado',i:'☀️'},1:{d:'Mayormente despejado',i:'🌤️'},2:{d:'Parcialmente nublado',i:'⛅'},
-    3:{d:'Nublado',i:'☁️'},45:{d:'Niebla',i:'🌫️'},48:{d:'Niebla helada',i:'🌫️'},
-    51:{d:'Llovizna leve',i:'🌦️'},53:{d:'Llovizna',i:'🌦️'},55:{d:'Llovizna intensa',i:'🌧️'},
-    61:{d:'Lluvia leve',i:'🌦️'},63:{d:'Lluvia',i:'🌧️'},65:{d:'Lluvia intensa',i:'🌧️'},
-    71:{d:'Nevada leve',i:'🌨️'},73:{d:'Nevada',i:'🌨️'},75:{d:'Nevada intensa',i:'❄️'},
-    80:{d:'Chaparrones',i:'🌦️'},81:{d:'Chaparrones',i:'🌧️'},82:{d:'Chaparrones fuertes',i:'🌧️'},
-    95:{d:'Tormenta',i:'⛈️'},96:{d:'Tormenta con granizo',i:'⛈️'},99:{d:'Tormenta con granizo',i:'⛈️'}
+    0: { d: 'Despejado', i: '☀️' }, 1: { d: 'Mayormente despejado', i: '🌤️' }, 2: { d: 'Parcialmente nublado', i: '⛅' },
+    3: { d: 'Nublado', i: '☁️' }, 45: { d: 'Niebla', i: '🌫️' }, 48: { d: 'Niebla helada', i: '🌫️' },
+    51: { d: 'Llovizna leve', i: '🌦️' }, 53: { d: 'Llovizna', i: '🌦️' }, 55: { d: 'Llovizna intensa', i: '🌧️' },
+    61: { d: 'Lluvia leve', i: '🌦️' }, 63: { d: 'Lluvia', i: '🌧️' }, 65: { d: 'Lluvia intensa', i: '🌧️' },
+    71: { d: 'Nevada leve', i: '🌨️' }, 73: { d: 'Nevada', i: '🌨️' }, 75: { d: 'Nevada intensa', i: '❄️' },
+    80: { d: 'Chaparrones', i: '🌦️' }, 81: { d: 'Chaparrones', i: '🌧️' }, 82: { d: 'Chaparrones fuertes', i: '🌧️' },
+    95: { d: 'Tormenta', i: '⛈️' }, 96: { d: 'Tormenta con granizo', i: '⛈️' }, 99: { d: 'Tormenta con granizo', i: '⛈️' }
 };
-const DAY_NAMES = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const STALE_MINUTES = 15;
 const NORMAL_RANGE = '25–45 min';
 const TAB_LABELS = { trafico: 'Tráfico', alertas: 'Alertas', clima: 'Clima', info: 'Info' };
-const congestionOrder = ['agil','moderado','cargado','colapsado'];
+const congestionOrder = ['agil', 'moderado', 'cargado', 'colapsado'];
 const CURRENCY_PREFIX = { USD: 'U$D', ARS: 'AR$', PYG: 'PY₲' };
 const BRIDGE_ALTS = {
     agil: 'Puente con tráfico ágil',
@@ -47,7 +47,8 @@ const tickerData = {
     traffic: 'CARGANDO ESTADO DEL TRÁNSITO...',
     train: 'CARGANDO ESTADO DEL TREN...',
     weather: 'CARGANDO CLIMA...',
-    rates: 'CARGANDO COTIZACIONES...'
+    rates: 'CARGANDO COTIZACIONES...',
+    info: 'LOS TIEMPOS DE ESPERA SON ESTIMACIONES, EL TIEMPO DE ESPERA REAL PODRÍA VARIAR'
 };
 
 function renderTicker() {
@@ -57,7 +58,8 @@ function renderTicker() {
         tickerData.traffic,
         tickerData.train,
         tickerData.weather,
-        tickerData.rates
+        tickerData.rates,
+        tickerData.info
     ];
     const separator = '   •   ';
     const msg = parts.filter(Boolean).join(separator).toUpperCase();
@@ -140,7 +142,7 @@ function updateClockAndTrain() {
     const fmtPY = new Intl.DateTimeFormat('es-PY', { timeZone: 'America/Asuncion', hour: '2-digit', minute: '2-digit', hour12: false });
     const arTime = fmtAR.format(now);
     const pyTime = fmtPY.format(now);
-    
+
     // Update digital board clocks
     const arHourEl = document.getElementById('board-clock-ar-hour');
     const arMinEl = document.getElementById('board-clock-ar-min');
@@ -149,7 +151,7 @@ function updateClockAndTrain() {
         arHourEl.textContent = arParts[0];
         arMinEl.textContent = arParts[1];
     }
-    
+
     const pyHourEl = document.getElementById('board-clock-py-hour');
     const pyMinEl = document.getElementById('board-clock-py-min');
     const pyParts = pyTime.split(':');
@@ -194,7 +196,7 @@ function updateClockAndTrain() {
     } else {
         trainMsg = 'TREN: FUERA DE HORARIO';
     }
-    
+
     tickerData.train = trainMsg;
     renderTicker();
 }
@@ -255,12 +257,12 @@ function updateTrafficSummary(mI, mV) {
         summary.hidden = true;
         return;
     }
-    
+
     // Hide summary if we are on the 'trafico' tab
     const activeBtn = document.querySelector('.tab-btn.active');
     const isTrafico = activeBtn ? activeBtn.dataset.tab === 'trafico' : true;
     summary.hidden = isTrafico;
-    
+
     const tsIda = document.getElementById('ts-ida');
     const tsVuelta = document.getElementById('ts-vuelta');
     const levelIda = getCongestionLevel(mI);
@@ -495,10 +497,10 @@ async function fetchWeather(manual = false) {
         document.getElementById('w-feels').textContent = Math.round(c.apparent_temperature) + '°';
         document.getElementById('w-humidity').textContent = c.relative_humidity_2m + '%';
         document.getElementById('w-wind').textContent = Math.round(c.wind_speed_10m) + ' km/h';
-        
+
         tickerData.weather = `🌦️ CLIMA: ${Math.round(c.temperature_2m)}°C (${wmo.d})`;
         renderTicker();
-        
+
         setWeatherLoading(false);
 
         const grid = document.getElementById('forecast-grid');
