@@ -35,7 +35,9 @@
     {% endif %}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;600;700&family=Share+Tech+Mono&family=VT323&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;600;700&family=Share+Tech+Mono&family=VT323&display=swap"
+        rel="stylesheet">
     <link rel="canonical" href="{{ og_url }}">
     <meta name="robots" content="index, follow">
     <meta name="keywords"
@@ -105,7 +107,8 @@
     <div class="app">
         <header class="header">
             <div class="header-logo-container">
-                <img src="/static/images/puenteHoyTransparente.webp" alt="Logo PuenteHoy" class="header-logo" width="685" height="320">
+                <img src="/static/images/puenteHoyTransparente.webp" alt="Logo PuenteHoy" class="header-logo"
+                    width="685" height="320">
             </div>
             <p class="header-tagline">Puente San Roque González - Tiempos de cruce en vivo</p>
             <div class="subtitle" aria-label="Posadas Argentina y Encarnación Paraguay">🇵🇾 Encarnación ↔ Posadas 🇦🇷
@@ -561,21 +564,10 @@
             </button>
         </nav>
 
-        <section class="ads-section" aria-label="Espacio publicitario">
-            <p class="ad-label">Espacio publicitario — <a href="mailto:sbardemadrian@gmail.com">Anunciá aquí</a></p>
-            <aside class="sponsored-banner" aria-label="Publicidad">
-                <img src="/static/images/banner-pereira-marino.webp"
-                    alt="Carlos Pereira Intendente y Marino Concejal — Lista 4, Opción 5. ¡Adelante Encarnación!"
-                    width="1024" height="534" loading="lazy" decoding="async">
-            </aside>
-            <div class="ad-space" id="ad-container"></div>
-        </section>
-
-        <div class="attribution">Tráfico: <a href="https://www.waze.com" target="_blank"
-                rel="noopener noreferrer">Waze</a> ·
-            Clima: <a href="https://open-meteo.com/" target="_blank" rel="noopener noreferrer">Open-Meteo</a> (CC BY
-            4.0) ·
-            Hecho por Adrián Sbardella · <a href="mailto:sbardemadrian@gmail.com">E-Mail</a></div>
+        {% if show_ads %}
+        {% include 'partials/ads.html' %}
+        {% endif %}
+        {% include 'partials/footer.html' %}
     </div>
 
     <script src="/static/js/app.js"></script>

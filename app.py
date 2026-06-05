@@ -440,6 +440,12 @@ logging.getLogger("WazeRouteCalculator.WazeRouteCalculator").setLevel(logging.WA
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)
 
+
+@app.context_processor
+def inject_globals():
+    """Make current_year available in all templates."""
+    return {"current_year": datetime.now().year}
+
 # Configuración de Coordenadas y Región
 POSADAS_COORDS = "-27.4035,-55.8928"
 ENCARNACION_COORDS = "-27.3522,-55.8588"
@@ -539,7 +545,7 @@ def build_index_context():
     context["level_ida_key"] = level_ida["key"]
     context["level_vuelta_key"] = level_vuelta["key"]
     context["level_ida_label"] = level_ida["label"]
-    context["level_vuelta_label"] = level_vuelta["label"]
+    context["show_ads"] = True
     
     if cache.get("status") == "success":
         ticker_text = f"🚗 TRÁNSITO EN VIVO: A ENCARNACIÓN {ida_mins if ida_mins is not None else '--'} MIN - {level_ida['label'].upper()} • A POSADAS {vuelta_mins if vuelta_mins is not None else '--'} MIN - {level_vuelta['label'].upper()}"
@@ -742,6 +748,7 @@ def start_background_updater():
         updater_thread.start()
 
 
+
 @app.route('/', methods=['GET'])
 def index():
     """Ruta para el microfrontend en smartphone (render.com)"""
@@ -757,6 +764,21 @@ def sitemap():
         <loc>{base}/</loc>
         <changefreq>always</changefreq>
         <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>{base}/privacy</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>{base}/terms</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
+    </url>
+    <url>
+        <loc>{base}/contact</loc>
+        <changefreq>monthly</changefreq>
+        <priority>0.3</priority>
     </url>
 </urlset>"""
     response = app.response_class(xml, mimetype='application/xml')
@@ -796,6 +818,19 @@ def favicon():
 @app.route('/manifest.json')
 def manifest():
     return app.send_static_file('manifest.json')
+
+# New Policy Pages
+@app.route('/privacy')
+def privacy():
+    return render_template('privacy.html')
+
+@app.route('/terms')
+def terms():
+    return render_template('terms.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
 
 
 @app.route('/sw.js')
