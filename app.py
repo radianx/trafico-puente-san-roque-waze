@@ -4,6 +4,7 @@ import threading
 import time
 import logging
 from datetime import datetime, timezone
+import math
 import os
 import json
 import base64
@@ -452,6 +453,60 @@ ENCARNACION_COORDS = "-27.3522,-55.8588"
 REGION = 'EU'
 UPDATE_INTERVAL_SECONDS = 5 * 60  # 5 minutos
 
+# --- Penalización por cambio de guardia en Aduana Argentina ---
+# Los cambios de guardia se realizan a las 07:00, 15:00 y 23:00 h (hora Argentina).
+# Durante el traspaso de funciones, el ritmo de atención baja significativamente
+# pero los sensores de tráfico (Waze/Google Maps) no registran este retraso
+# porque los vehículos ya aparecen como "estacionados" cuando están detenidos.
+GUARD_SHIFT_HOURS = [7, 15, 23]  # Horas de cambio de guardia (America/Argentina/Cordoba)
+GUARD_SHIFT_MAX_PENALTY = 60     # Penalización máxima en minutos al momento exacto del cambio
+GUARD_SHIFT_DECAY_MINUTES = 45   # Ventana en minutos donde la penalización decae a cero
+GUARD_SHIFT_CONGESTION_THRESHOLD = 40  # Solo aplicar si la estimación base ya supera este umbral
+
+
+def calculate_guard_shift_penalty(now_ar_hour, now_ar_minute, base_estimate_minutes):
+    """
+    Calcula la penalización por cambio de guardia en la Aduana Argentina.
+
+    La penalización solo se aplica cuando:
+    1. La estimación base ya muestra congestión (> GUARD_SHIFT_CONGESTION_THRESHOLD min)
+    2. Estamos dentro de la ventana de GUARD_SHIFT_DECAY_MINUTES después de un cambio de guardia
+
+    Usa una curva coseno (suave) para que la penalización sea máxima en :00 y
+    decaiga gradualmente a cero durante los siguientes 45 minutos.
+
+    Args:
+        now_ar_hour: Hora actual en Argentina (0-23)
+        now_ar_minute: Minuto actual en Argentina (0-59)
+        base_estimate_minutes: Estimación actual en minutos (Waze + penalización visual)
+
+    Returns:
+        Penalización en minutos (float). 0 si no aplica.
+    """
+    if base_estimate_minutes <= GUARD_SHIFT_CONGESTION_THRESHOLD:
+        return 0.0
+
+    current_total_minutes = now_ar_hour * 60 + now_ar_minute
+
+    min_elapsed = None
+    for shift_hour in GUARD_SHIFT_HOURS:
+        shift_total = shift_hour * 60
+        # Minutos transcurridos desde el último cambio de guardia
+        elapsed = (current_total_minutes - shift_total) % (24 * 60)
+        if elapsed < GUARD_SHIFT_DECAY_MINUTES:
+            if min_elapsed is None or elapsed < min_elapsed:
+                min_elapsed = elapsed
+
+    if min_elapsed is None:
+        return 0.0
+
+    # Curva coseno: máxima en 0, decae suavemente a 0 en GUARD_SHIFT_DECAY_MINUTES
+    # cos(0) = 1.0, cos(π) = -1.0 → (1 + cos(x)) / 2 da una curva de 1.0 a 0.0
+    decay_ratio = (1.0 + math.cos(math.pi * min_elapsed / GUARD_SHIFT_DECAY_MINUTES)) / 2.0
+    penalty = GUARD_SHIFT_MAX_PENALTY * decay_ratio
+
+    return round(penalty, 1)
+
 # Estructura global para almacenar en memoria el último resultado
 trafico_cache = {
     "ida_encarnacion": None,
@@ -596,6 +651,22 @@ def update_traffic_data():
                                 tiempo_vuelta += res_vuelta['penalty_minutes']
                 except Exception as ex:
                     logging.error("Error al obtener penalizaciones de visión: %s", ex)
+
+            # --- Penalización por cambio de guardia (solo Encarnación → Posadas) ---
+            try:
+                from zoneinfo import ZoneInfo
+                now_ar = datetime.now(ZoneInfo('America/Argentina/Cordoba'))
+                guard_penalty = calculate_guard_shift_penalty(
+                    now_ar.hour, now_ar.minute, tiempo_vuelta
+                )
+                if guard_penalty > 0:
+                    tiempo_vuelta += guard_penalty
+                    logging.info(
+                        "Penalización cambio de guardia aplicada: +%.1f min (hora AR: %02d:%02d, base: %.0f min)",
+                        guard_penalty, now_ar.hour, now_ar.minute, tiempo_vuelta - guard_penalty,
+                    )
+            except Exception as ex:
+                logging.error("Error al calcular penalización de cambio de guardia: %s", ex)
 
             trafico_cache["ida_encarnacion"] = f"{tiempo_ida:.0f}min"
             trafico_cache["vuelta_posadas"] = f"{tiempo_vuelta:.0f}min"
