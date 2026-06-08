@@ -6,9 +6,16 @@ from datetime import datetime, timezone
 from flask import request
 import WazeRouteCalculator
 
+from concurrent.futures import ThreadPoolExecutor
 import config
 from database import db_enabled, db_conn, RealDictCursor
-from push import load_subscriptions, save_subscriptions, send_push_notification
+from push import (
+    load_subscriptions,
+    save_subscriptions,
+    send_push_notification,
+    update_subscription_last_notified,
+    unsubscribe_endpoint
+)
 
 # Cache global de tráfico
 trafico_cache = {
@@ -173,11 +180,16 @@ def update_traffic_data():
         try:
             logging.info("Actualizando caché de Waze...")
 
-            route_ida = WazeRouteCalculator.WazeRouteCalculator(config.POSADAS_COORDS, config.ENCARNACION_COORDS, config.REGION)
-            tiempo_ida_raw, _ = route_ida.calc_route_info(real_time=True)
+            def get_route_time(start, end):
+                route = WazeRouteCalculator.WazeRouteCalculator(start, end, config.REGION)
+                t, _ = route.calc_route_info(real_time=True)
+                return t
 
-            route_vuelta = WazeRouteCalculator.WazeRouteCalculator(config.ENCARNACION_COORDS, config.POSADAS_COORDS, config.REGION)
-            tiempo_vuelta_raw, _ = route_vuelta.calc_route_info(real_time=True)
+            with ThreadPoolExecutor(max_workers=2) as executor:
+                f_ida = executor.submit(get_route_time, config.POSADAS_COORDS, config.ENCARNACION_COORDS)
+                f_vuelta = executor.submit(get_route_time, config.ENCARNACION_COORDS, config.POSADAS_COORDS)
+                tiempo_ida_raw = f_ida.result()
+                tiempo_vuelta_raw = f_vuelta.result()
 
             tiempo_ida = tiempo_ida_raw
             tiempo_vuelta = tiempo_vuelta_raw
@@ -343,10 +355,9 @@ def update_traffic_data():
                 m_vuelta = int(round(tiempo_vuelta))
                 
                 subs = load_subscriptions()
-                updated_subs = []
-                any_change = False
                 
                 for s in subs:
+                    endpoint = s.get("endpoint")
                     direction = s.get("direction", "ida")
                     threshold = s.get("threshold", 60)
                     last_val = s.get("last_notified_value")
@@ -382,10 +393,9 @@ def update_traffic_data():
                         if ok:
                             if s.get("last_notified_value") != next_last:
                                 s["last_notified_value"] = next_last
-                                any_change = True
-                            updated_subs.append(s)
+                                update_subscription_last_notified(endpoint, next_last)
                         else:
-                            any_change = True  # se descarta
+                            unsubscribe_endpoint(endpoint)
                         continue
 
                     if direction not in ("ida", "vuelta"):
@@ -399,8 +409,7 @@ def update_traffic_data():
 
                     if last_val is None:
                         s["last_notified_value"] = current_val
-                        any_change = True
-                        updated_subs.append(s)
+                        update_subscription_last_notified(endpoint, current_val)
                         continue
 
                     if current_val > threshold and last_val <= threshold:
@@ -409,10 +418,9 @@ def update_traffic_data():
                         success = send_push_notification(s, title, body)
                         if success:
                             s["last_notified_value"] = current_val
-                            any_change = True
-                            updated_subs.append(s)
+                            update_subscription_last_notified(endpoint, current_val)
                         else:
-                            any_change = True
+                            unsubscribe_endpoint(endpoint)
 
                     elif current_val <= threshold and last_val > threshold:
                         title = "✅ Tránsito Fluidificado"
@@ -420,19 +428,9 @@ def update_traffic_data():
                         success = send_push_notification(s, title, body)
                         if success:
                             s["last_notified_value"] = current_val
-                            any_change = True
-                            updated_subs.append(s)
+                            update_subscription_last_notified(endpoint, current_val)
                         else:
-                            any_change = True
-
-                    else:
-                        if last_val != current_val:
-                            s["last_notified_value"] = current_val
-                            any_change = True
-                        updated_subs.append(s)
-                        
-                if any_change:
-                    save_subscriptions(updated_subs)
+                            unsubscribe_endpoint(endpoint)
             except Exception as ex:
                 logging.error("Error al procesar alertas push en loop: %s", ex)
 
@@ -447,9 +445,41 @@ def update_traffic_data():
 thread_started = False
 
 
+def _preload_waze_history():
+    """
+    Precarga las últimas 6 lecturas de waze_vuelta_raw desde Supabase
+    para que el algoritmo de suavizado tenga contexto histórico
+    inmediatamente después de un deploy/reinicio.
+    """
+    global waze_vuelta_history
+    if not db_enabled():
+        return
+    try:
+        with db_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute("""
+                    SELECT waze_vuelta_raw
+                    FROM traffic_readings
+                    WHERE waze_vuelta_raw IS NOT NULL
+                    ORDER BY recorded_at DESC
+                    LIMIT 6;
+                """)
+                rows = cur.fetchall()
+        if rows:
+            # Los resultados vienen en orden DESC, los invertimos para orden cronológico
+            waze_vuelta_history = [float(r[0]) for r in reversed(rows)]
+            logging.info(
+                "Historial de Waze precargado desde BD: %d lecturas %s",
+                len(waze_vuelta_history), waze_vuelta_history
+            )
+    except Exception as ex:
+        logging.warning("No se pudo precargar historial de Waze desde BD: %s", ex)
+
+
 def start_background_updater():
     global thread_started
     if not thread_started:
         thread_started = True
+        _preload_waze_history()
         updater_thread = threading.Thread(target=update_traffic_data, daemon=True)
         updater_thread.start()

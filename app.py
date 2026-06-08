@@ -10,7 +10,8 @@ from push import (
     fetch_vapid_public_key,
     load_subscriptions,
     save_subscriptions,
-    send_push_notification
+    send_push_notification,
+    unsubscribe_endpoint
 )
 from traffic import (
     trafico_cache,
@@ -195,11 +196,7 @@ def unsubscribe():
         return jsonify({"error": "Missing endpoint"}), 400
         
     endpoint = data['endpoint']
-    subs = load_subscriptions()
-    new_subs = [s for s in subs if s.get('endpoint') != endpoint]
-    
-    if len(new_subs) != len(subs):
-        save_subscriptions(new_subs)
+    if unsubscribe_endpoint(endpoint):
         return jsonify({"status": "success"})
     return jsonify({"status": "not_found"}), 404
 

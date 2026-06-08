@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import time
 from contextlib import contextmanager
 import config
 
@@ -14,6 +15,8 @@ except ImportError:
 
 DB_RUNTIME_DISABLED = False
 DB_RUNTIME_DISABLE_REASON = None
+DB_LAST_FAILURE_TIME = 0
+DB_CIRCUIT_BREAKER_COOLDOWN = 300  # 5 minutos en segundos
 
 
 def get_db_url():
@@ -21,12 +24,22 @@ def get_db_url():
 
 
 def db_enabled():
-    return bool(get_db_url()) and psycopg2 is not None and not DB_RUNTIME_DISABLED
+    global DB_RUNTIME_DISABLED
+    if not get_db_url() or psycopg2 is None:
+        return False
+    if DB_RUNTIME_DISABLED:
+        # Si ya pasó el tiempo de cooldown, permitimos intentar conectarse de nuevo
+        if time.time() - DB_LAST_FAILURE_TIME > DB_CIRCUIT_BREAKER_COOLDOWN:
+            logging.info("Reintentando conexión a Base de Datos (Circuit Breaker Cooldown finalizado)...")
+            DB_RUNTIME_DISABLED = False
+        else:
+            return False
+    return True
 
 
 @contextmanager
 def db_conn():
-    global DB_RUNTIME_DISABLED, DB_RUNTIME_DISABLE_REASON
+    global DB_RUNTIME_DISABLED, DB_RUNTIME_DISABLE_REASON, DB_LAST_FAILURE_TIME
     url = get_db_url()
     if not url:
         raise RuntimeError("Supabase/Postgres URL is not configured")
@@ -36,6 +49,8 @@ def db_conn():
     except Exception as exc:
         DB_RUNTIME_DISABLED = True
         DB_RUNTIME_DISABLE_REASON = str(exc)
+        DB_LAST_FAILURE_TIME = time.time()
+        logging.error("Fallo de conexión a la Base de Datos. Se activa circuit breaker. Error: %s", exc)
         raise
 
 
@@ -109,8 +124,9 @@ def init_db():
     except Exception as exc:
         DB_RUNTIME_DISABLED = True
         DB_RUNTIME_DISABLE_REASON = str(exc)
+        DB_LAST_FAILURE_TIME = time.time()
         logging.warning(
-            "No se pudo conectar a Supabase/Postgres. Se activa fallback local. error=%s",
+            "No se pudo conectar a Supabase/Postgres durante la inicialización. Se activa fallback local. error=%s",
             exc,
         )
 

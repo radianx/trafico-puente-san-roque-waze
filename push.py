@@ -30,8 +30,13 @@ except Exception as patch_ex:
     logging.warning("No se pudo aplicar el patch de compatibilidad para pywebpush: %s", patch_ex)
 
 
+_cached_vapid_private_key = None
+
+
 def _generate_vapid_keys():
     """Genera un nuevo par de claves VAPID y lo guarda en DB o archivos locales."""
+    global _cached_vapid_private_key
+    _cached_vapid_private_key = None
     private_key = ec.generate_private_key(ec.SECP256R1())
     pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
@@ -139,6 +144,10 @@ def get_vapid_private_key_for_webpush():
     - A file path to the PEM file (when using local fallback)
     pywebpush's Vapid.from_string() expects DER base64url, NOT a PEM string.
     """
+    global _cached_vapid_private_key
+    if _cached_vapid_private_key is not None:
+        return _cached_vapid_private_key
+
     if db_enabled():
         with db_conn() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
@@ -156,8 +165,10 @@ def get_vapid_private_key_for_webpush():
             format=serialization.PrivateFormat.PKCS8,
             encryption_algorithm=serialization.NoEncryption(),
         )
-        return base64.urlsafe_b64encode(der_bytes).decode("utf-8")
-    return config.PRIVATE_KEY_FILE
+        _cached_vapid_private_key = base64.urlsafe_b64encode(der_bytes).decode("utf-8")
+    else:
+        _cached_vapid_private_key = config.PRIVATE_KEY_FILE
+    return _cached_vapid_private_key
 
 
 def load_subscriptions():
@@ -218,6 +229,61 @@ def save_subscriptions(subs):
             json.dump(subs, f, indent=2)
     except Exception as e:
         logging.error("Error al escribir %s: %s", config.SUBSCRIPTIONS_FILE, e)
+
+
+def update_subscription_last_notified(endpoint, last_notified_value):
+    """
+    Actualiza atómicamente el campo last_notified_value de una suscripción
+    para evitar recrear toda la tabla/archivo en cada ciclo.
+    """
+    if db_enabled():
+        try:
+            with db_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        """
+                        UPDATE push_subscriptions
+                        SET last_notified_value = %s, updated_at = NOW()
+                        WHERE endpoint = %s;
+                        """,
+                        (Json(last_notified_value) if Json is not None else json.dumps(last_notified_value), endpoint),
+                    )
+                conn.commit()
+        except Exception as ex:
+            logging.error("Error al actualizar last_notified_value en BD: %s", ex)
+    else:
+        subs = load_subscriptions()
+        for s in subs:
+            if s.get("endpoint") == endpoint:
+                s["last_notified_value"] = last_notified_value
+                break
+        save_subscriptions(subs)
+
+
+def unsubscribe_endpoint(endpoint):
+    """
+    Elimina una suscripción de la base de datos o del archivo de fallback local.
+    """
+    if db_enabled():
+        try:
+            with db_conn() as conn:
+                with conn.cursor() as cur:
+                    cur.execute(
+                        "DELETE FROM push_subscriptions WHERE endpoint = %s;",
+                        (endpoint,)
+                    )
+                conn.commit()
+            return True
+        except Exception as ex:
+            logging.error("Error al eliminar suscripción de BD: %s", ex)
+            return False
+    else:
+        subs = load_subscriptions()
+        new_subs = [s for s in subs if s.get('endpoint') != endpoint]
+        if len(new_subs) != len(subs):
+            save_subscriptions(new_subs)
+            return True
+        return False
 
 
 def send_push_notification(subscription, title, body):
