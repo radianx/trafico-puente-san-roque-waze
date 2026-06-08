@@ -97,6 +97,15 @@ def init_db():
                         vuelta_minutes NUMERIC(5,1)
                     );
                 """)
+                # Agregar columnas para telemetría y auditoría de variables internas (historico)
+                cur.execute("ALTER TABLE traffic_readings ADD COLUMN IF NOT EXISTS waze_ida_raw NUMERIC(5,1);")
+                cur.execute("ALTER TABLE traffic_readings ADD COLUMN IF NOT EXISTS waze_vuelta_raw NUMERIC(5,1);")
+                cur.execute("ALTER TABLE traffic_readings ADD COLUMN IF NOT EXISTS visual_penalty_ida NUMERIC(5,1);")
+                cur.execute("ALTER TABLE traffic_readings ADD COLUMN IF NOT EXISTS visual_penalty_vuelta NUMERIC(5,1);")
+                cur.execute("ALTER TABLE traffic_readings ADD COLUMN IF NOT EXISTS active_booths NUMERIC(5,1);")
+                cur.execute("ALTER TABLE traffic_readings ADD COLUMN IF NOT EXISTS booth_correction NUMERIC(5,1);")
+                cur.execute("ALTER TABLE traffic_readings ADD COLUMN IF NOT EXISTS guard_penalty NUMERIC(5,1);")
+                
                 cur.execute("""
                     CREATE INDEX IF NOT EXISTS traffic_readings_recorded_at_idx
                         ON traffic_readings (recorded_at DESC);
@@ -507,6 +516,76 @@ def calculate_guard_shift_penalty(now_ar_hour, now_ar_minute, base_estimate_minu
 
     return round(penalty, 1)
 
+
+# --- Estimación heurística de casillas abiertas en Aduana Argentina ---
+# El Centro de Frontera Posadas opera entre 1 y 8 casillas simultáneas.
+# La cantidad varía dinámicamente según hora, personal y volumen de tráfico.
+# No se publica un número oficial; esta tabla es una estimación heurística
+# basada en patrones operativos observados.
+BOOTH_SCHEDULE = {
+    # hora: casillas estimadas activas
+    0: 1.5,  1: 1.5,  2: 1.5,  3: 1.5,  4: 1.5,  5: 2,
+    6: 3,    7: 4,    8: 5,    9: 5.5,  10: 6,   11: 6,
+    12: 6,   13: 6,   14: 6,   15: 6,   16: 6.5, 17: 6.5,
+    18: 6,   19: 5,   20: 4,   21: 3,   22: 2.5, 23: 2,
+}
+BOOTH_REFERENCE = 8            # Casillas en horario pico. Los sensores están "calibrados" a este nivel.
+BOOTH_BASE_TRAVEL_MINUTES = 25 # Tiempo de cruce sin congestión (min)
+BOOTH_MAX_CORRECTION = 120     # Cap máximo de corrección en minutos (reportes de hasta 4h reales)
+
+
+def estimate_active_booths(hour, minute):
+    """
+    Estima la cantidad de casillas abiertas en la aduana argentina
+    usando interpolación lineal entre la hora actual y la siguiente.
+
+    Args:
+        hour: Hora actual en Argentina (0-23)
+        minute: Minuto actual en Argentina (0-59)
+
+    Returns:
+        Número estimado de casillas activas (float, 1.0-8.0)
+    """
+    next_hour = (hour + 1) % 24
+    current_booths = BOOTH_SCHEDULE[hour]
+    next_booths = BOOTH_SCHEDULE[next_hour]
+    fraction = minute / 60.0
+    return current_booths + (next_booths - current_booths) * fraction
+
+
+def calculate_booth_correction(base_minutes, active_booths):
+    """
+    Calcula minutos adicionales de corrección basándose en la cantidad
+    de casillas abiertas vs. la referencia de horario pico.
+
+    Lógica:
+    1. Incluso con tránsito fluido, calculamos una espera base en la aduana según casillas.
+       Con 2 casillas (mínimo nocturno), la espera base debería rondar los 20 min.
+       Con 8 casillas (máximo/referencia), la espera base es 0 min.
+       Fórmula: baseline = (BOOTH_REFERENCE - active_booths) * 3.33
+       
+    2. Si hay congestión real (ej. Waze > 25), la fila avanza más lento,
+       por lo que la porción de congestión se multiplica por el factor de casillas:
+       congestión_adicional = (base - 25) * (BOOTH_REFERENCE / active_booths - 1.0)
+       
+    La corrección total es la mayor de las dos (espera base o congestión amplificada).
+    """
+    # 1. Espera base en aduana según casillas abiertas
+    booth_baseline_wait = max(0.0, (BOOTH_REFERENCE - active_booths) * 3.33)
+
+    # 2. Congestión adicional por cuello de botella
+    congestion_portion = max(0.0, base_minutes - BOOTH_BASE_TRAVEL_MINUTES)
+    if active_booths > 0:
+        correction_factor = (BOOTH_REFERENCE / active_booths) - 1.0
+    else:
+        correction_factor = 0.0
+    congestion_adicional = congestion_portion * correction_factor
+
+    # Corrección total
+    correction = max(booth_baseline_wait, congestion_adicional)
+    return min(round(correction, 1), BOOTH_MAX_CORRECTION)
+
+
 # Estructura global para almacenar en memoria el último resultado
 trafico_cache = {
     "ida_encarnacion": None,
@@ -515,6 +594,9 @@ trafico_cache = {
     "status": "initializing",
     "error_message": None
 }
+
+# Historial de lecturas base (Waze + visual) de la vuelta para suavizado (últimos 30m)
+waze_vuelta_history = []
 
 
 def site_base_url():
@@ -629,6 +711,13 @@ def update_traffic_data():
             tiempo_ida = tiempo_ida_raw
             tiempo_vuelta = tiempo_vuelta_raw
 
+            # Variables de telemetría para persistir en BD
+            visual_penalty_ida = 0.0
+            visual_penalty_vuelta = 0.0
+            active_booths = None
+            booth_correction = 0.0
+            guard_penalty = 0.0
+
             # --- Vision Penalty Integration ---
             if db_enabled():
                 try:
@@ -640,7 +729,8 @@ def update_traffic_data():
                             )
                             res_ida = cur.fetchone()
                             if res_ida:
-                                tiempo_ida += res_ida['penalty_minutes']
+                                visual_penalty_ida = float(res_ida['penalty_minutes'])
+                                tiempo_ida += visual_penalty_ida
                             
                             # Get latest penalty for vuelta (Encarnacion -> Posadas)
                             cur.execute(
@@ -648,9 +738,37 @@ def update_traffic_data():
                             )
                             res_vuelta = cur.fetchone()
                             if res_vuelta:
-                                tiempo_vuelta += res_vuelta['penalty_minutes']
+                                visual_penalty_vuelta = float(res_vuelta['penalty_minutes'])
+                                tiempo_vuelta += visual_penalty_vuelta
                 except Exception as ex:
                     logging.error("Error al obtener penalizaciones de visión: %s", ex)
+
+            # --- Guardar tiempo base antes de correcciones para suavizado/decaimiento ---
+            tiempo_vuelta_base = tiempo_vuelta
+            try:
+                global waze_vuelta_history
+                waze_vuelta_history.append(tiempo_vuelta_base)
+                waze_vuelta_history = waze_vuelta_history[-6:]
+            except Exception as ex:
+                logging.error("Error al actualizar historial de Waze: %s", ex)
+
+            # --- Corrección por casillas abiertas (solo Encarnación → Posadas) ---
+            # Debe aplicarse ANTES de la penalización de guardia para que el pipeline sea:
+            # Waze base → +visual → ×casillas (con baseline) → +cambio de guardia
+            try:
+                from zoneinfo import ZoneInfo
+                now_ar = datetime.now(ZoneInfo('America/Argentina/Cordoba'))
+                active_booths = estimate_active_booths(now_ar.hour, now_ar.minute)
+                booth_correction = calculate_booth_correction(tiempo_vuelta, active_booths)
+                if booth_correction > 0:
+                    tiempo_vuelta += booth_correction
+                    logging.info(
+                        "Corrección por casillas aplicada: +%.1f min (casillas: %.1f, hora AR: %02d:%02d, base: %.0f min)",
+                        booth_correction, active_booths, now_ar.hour, now_ar.minute,
+                        tiempo_vuelta - booth_correction,
+                    )
+            except Exception as ex:
+                logging.error("Error al calcular corrección por casillas: %s", ex)
 
             # --- Penalización por cambio de guardia (solo Encarnación → Posadas) ---
             try:
@@ -668,6 +786,48 @@ def update_traffic_data():
             except Exception as ex:
                 logging.error("Error al calcular penalización de cambio de guardia: %s", ex)
 
+            # --- Suavizado / Decaimiento gradual (solo Encarnación → Posadas) ---
+            try:
+                # Verificar si estuvo fluido los últimos 30 min (6 intervalos de 5 min)
+                waze_fully_fluid_30m = (
+                    len(waze_vuelta_history) >= 6 and 
+                    all(x <= BOOTH_BASE_TRAVEL_MINUTES for x in waze_vuelta_history)
+                )
+                
+                # Definir el target
+                if waze_fully_fluid_30m:
+                    # Si estuvo verdaderamente fluido por 30m, la estimación real es la de Waze únicamente
+                    target = tiempo_vuelta_base
+                else:
+                    # Si no, mantenemos el cálculo completo con corrección de casillas y guardia
+                    target = tiempo_vuelta
+                
+                # Obtener valor previo de caché para aplicar el decaimiento gradual
+                t_prev_str = trafico_cache.get("vuelta_posadas")
+                if t_prev_str:
+                    try:
+                        T_prev = float(t_prev_str.replace("min", "").strip())
+                    except ValueError:
+                        T_prev = None
+                else:
+                    T_prev = None
+                
+                # Aplicar decaimiento si el target es menor que el valor anterior
+                MAX_DECREASE_PER_CYCLE = 15.0
+                if T_prev is not None:
+                    if target < T_prev:
+                        tiempo_vuelta = max(target, T_prev - MAX_DECREASE_PER_CYCLE)
+                        logging.info(
+                            "Decaimiento gradual aplicado: %.1f min -> %.1f min (target: %.1f min, fluido 30m: %s)",
+                            T_prev, tiempo_vuelta, target, waze_fully_fluid_30m
+                        )
+                    else:
+                        tiempo_vuelta = target
+                else:
+                    tiempo_vuelta = target
+            except Exception as ex:
+                logging.error("Error al aplicar suavizado de tiempo de vuelta: %s", ex)
+
             trafico_cache["ida_encarnacion"] = f"{tiempo_ida:.0f}min"
             trafico_cache["vuelta_posadas"] = f"{tiempo_vuelta:.0f}min"
             trafico_cache["timestamp"] = datetime.now(timezone.utc).isoformat()
@@ -680,17 +840,38 @@ def update_traffic_data():
                 trafico_cache["vuelta_posadas"],
             )
 
-            # --- Persistir lectura histórica ---
+            # --- Persistir lectura histórica con telemetría completa ---
             if db_enabled():
                 try:
                     with db_conn() as conn:
                         with conn.cursor() as cur:
                             cur.execute(
                                 """
-                                INSERT INTO traffic_readings (recorded_at, ida_minutes, vuelta_minutes)
-                                VALUES (NOW(), %s, %s);
+                                INSERT INTO traffic_readings (
+                                    recorded_at, 
+                                    ida_minutes, 
+                                    vuelta_minutes,
+                                    waze_ida_raw,
+                                    waze_vuelta_raw,
+                                    visual_penalty_ida,
+                                    visual_penalty_vuelta,
+                                    active_booths,
+                                    booth_correction,
+                                    guard_penalty
+                                )
+                                VALUES (NOW(), %s, %s, %s, %s, %s, %s, %s, %s, %s);
                                 """,
-                                (round(tiempo_ida, 1), round(tiempo_vuelta, 1)),
+                                (
+                                    round(tiempo_ida, 1),
+                                    round(tiempo_vuelta, 1),
+                                    round(tiempo_ida_raw, 1) if tiempo_ida_raw is not None else None,
+                                    round(tiempo_vuelta_raw, 1) if tiempo_vuelta_raw is not None else None,
+                                    round(visual_penalty_ida, 1),
+                                    round(visual_penalty_vuelta, 1),
+                                    round(active_booths, 1) if active_booths is not None else None,
+                                    round(booth_correction, 1) if booth_correction is not None else None,
+                                    round(guard_penalty, 1) if guard_penalty is not None else None
+                                ),
                             )
                         conn.commit()
                 except Exception as ex:
