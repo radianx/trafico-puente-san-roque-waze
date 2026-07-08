@@ -161,6 +161,7 @@ def build_index_context():
     context["level_ida_key"] = level_ida["key"]
     context["level_vuelta_key"] = level_vuelta["key"]
     context["level_ida_label"] = level_ida["label"]
+    context["level_vuelta_label"] = level_vuelta["label"]
     context["show_ads"] = True
     
     if cache.get("status") == "success":

@@ -1,3 +1,19 @@
+// === Global Error Handling ===
+window.onerror = function (message, source, lineno, colno, error) {
+    console.error('Captured Global Error:', { message, source, lineno, colno, error });
+    if (typeof showToast === 'function') {
+        showToast('Ocurrió un error inesperado en la aplicación.', 'error');
+    }
+    return false;
+};
+
+window.addEventListener('unhandledrejection', function (event) {
+    console.error('Unhandled Promise Rejection:', event.reason);
+    if (typeof showToast === 'function') {
+        showToast('Error de red o conexión inesperado.', 'error');
+    }
+});
+
 // === Constants ===
 const WMO = {
     0: { d: 'Despejado', i: '☀️' }, 1: { d: 'Mayormente despejado', i: '🌤️' }, 2: { d: 'Parcialmente nublado', i: '⛅' },
@@ -69,12 +85,26 @@ function renderTicker() {
 // === Toast ===
 function showToast(message, type = 'info', duration = 4500) {
     const container = document.getElementById('toast-container');
+    if (!container) return;
     const el = document.createElement('div');
     el.className = `toast ${type}`;
     el.setAttribute('role', type === 'error' ? 'alert' : 'status');
-    el.textContent = message;
+
+    const textSpan = document.createElement('span');
+    textSpan.textContent = message;
+    el.appendChild(textSpan);
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'toast-close';
+    closeBtn.setAttribute('aria-label', 'Cerrar notificación');
+    closeBtn.innerHTML = '&times;';
+    closeBtn.addEventListener('click', () => el.remove());
+    el.appendChild(closeBtn);
+
     container.appendChild(el);
-    setTimeout(() => el.remove(), duration);
+    setTimeout(() => {
+        if (el.parentNode) el.remove();
+    }, duration);
 }
 
 // === Tabs (ARIA + keyboard) ===
@@ -229,27 +259,6 @@ function getCongestionLevel(m) {
     return { level: 'level-colapsado', label: 'Colapsado', emoji: '🔴', key: 'colapsado' };
 }
 
-function applyCongestion(cardId, badgeId, minutes) {
-    const card = document.getElementById(cardId);
-    const badge = document.getElementById(badgeId);
-    const { level, label, emoji } = getCongestionLevel(minutes);
-    card.className = 'route-card' + (level ? ' ' + level : '');
-    badge.className = 'congestion-badge' + (level ? ' ' + level : '');
-    badge.textContent = level ? `${emoji} ${label}` : '';
-}
-
-function setRouteHint(hintId, minutes, prev) {
-    const el = document.getElementById(hintId);
-    let hint = `Referencia habitual: ${NORMAL_RANGE}`;
-    el.className = 'route-hint';
-    if (prev !== null && prev !== undefined && minutes !== null && !isNaN(minutes) && prev !== minutes) {
-        const delta = minutes - prev;
-        const sign = delta > 0 ? '+' : '';
-        hint += ` · ${sign}${delta} min desde la última lectura`;
-        el.classList.add(delta > 0 ? 'delta-up' : 'delta-down');
-    }
-    el.textContent = hint;
-}
 
 function updateTrafficSummary(mI, mV) {
     const summary = document.getElementById('traffic-summary');

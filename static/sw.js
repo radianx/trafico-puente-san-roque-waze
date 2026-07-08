@@ -1,8 +1,8 @@
-const CACHE = 'puente-v6';
+const CACHE = 'puente-v7';
 const PRECACHE = [
   '/static/css/style.css',
   '/static/js/app.js',
-  '/static/images/puenteHoyTransparente.png',
+  '/static/images/puenteHoyTransparente.webp',
   '/static/images/android-chrome-192x192.png',
   '/static/images/android-chrome-512x512.png',
   '/static/images/apple-touch-icon.png',
