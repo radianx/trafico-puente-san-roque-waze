@@ -88,6 +88,19 @@ def site_base_url():
     return request.url_root.rstrip('/')
 
 
+def get_vague_range_py(m):
+    if m is None:
+        return "Calculando..."
+    if m < 30:
+        return "Menos de 30min"
+    elif m <= 60:
+        return "Entre 30 a 60 Minutos"
+    elif m <= 120:
+        return "Entre 1 a 2 Hs"
+    else:
+        return "Más de 2 Hs"
+
+
 def build_og_meta():
     base = site_base_url()
     cache = trafico_cache
@@ -95,12 +108,16 @@ def build_og_meta():
     page_title = "Tráfico Puente Posadas-Encarnación en Vivo | PuenteHoy"
 
     if cache.get("status") == "success":
-        ida = cache.get("ida_encarnacion", "--")
-        vuelta = cache.get("vuelta_posadas", "--")
-        og_title = f"Puente en vivo: {ida} ida · {vuelta} vuelta"
+        ida_raw = cache.get("ida_encarnacion")
+        vuelta_raw = cache.get("vuelta_posadas")
+        ida_mins = extract_minutes_py(ida_raw)
+        vuelta_mins = extract_minutes_py(vuelta_raw)
+        ida_range = get_vague_range_py(ida_mins)
+        vuelta_range = get_vague_range_py(vuelta_mins)
+        og_title = f"Puente en vivo: {ida_range} (Ida) · {vuelta_range} (Vuelta)"
         og_description = (
-            f"Posadas → Encarnación: {ida}. "
-            f"Encarnación → Posadas: {vuelta}. "
+            f"Posadas → Encarnación: {ida_range} (Est. {ida_mins if ida_mins is not None else '--'} min). "
+            f"Encarnación → Posadas: {vuelta_range} (Est. {vuelta_mins if vuelta_mins is not None else '--'} min). "
             "Clima, tren internacional y cotizaciones."
         )
     else:
@@ -154,10 +171,10 @@ def build_index_context():
     level_ida = get_congestion_level_py(ida_mins)
     level_vuelta = get_congestion_level_py(vuelta_mins)
     
-    context["ida_encarnacion_raw"] = ida_mins
-    context["vuelta_posadas_raw"] = vuelta_mins
-    context["status_ida"] = level_ida["label"]
-    context["status_vuelta"] = level_vuelta["label"]
+    context["ida_encarnacion_raw"] = get_vague_range_py(ida_mins) if ida_mins is not None else None
+    context["vuelta_posadas_raw"] = get_vague_range_py(vuelta_mins) if vuelta_mins is not None else None
+    context["status_ida"] = f"Est.: {ida_mins} min" if (ida_mins is not None and ida_mins <= 60) else ""
+    context["status_vuelta"] = f"Est.: {vuelta_mins} min" if (vuelta_mins is not None and vuelta_mins <= 120) else ""
     context["level_ida_key"] = level_ida["key"]
     context["level_vuelta_key"] = level_vuelta["key"]
     context["level_ida_label"] = level_ida["label"]
@@ -165,7 +182,7 @@ def build_index_context():
     context["show_ads"] = True
     
     if cache.get("status") == "success":
-        ticker_text = f"🚗 TRÁNSITO EN VIVO: A ENCARNACIÓN {ida_mins if ida_mins is not None else '--'} MIN - {level_ida['label'].upper()} • A POSADAS {vuelta_mins if vuelta_mins is not None else '--'} MIN - {level_vuelta['label'].upper()}"
+        ticker_text = f"🚗 TRÁNSITO EN VIVO: A ENCARNACIÓN: {get_vague_range_py(ida_mins).upper()} (EST.: {ida_mins if ida_mins is not None else '--'} MIN) • A POSADAS: {get_vague_range_py(vuelta_mins).upper()} (EST.: {vuelta_mins if vuelta_mins is not None else '--'} MIN)"
     else:
         ticker_text = "OBTENIENDO INFORMACIÓN DE TRÁNSITO..."
         

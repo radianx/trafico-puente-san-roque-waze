@@ -259,6 +259,15 @@ function getCongestionLevel(m) {
     return { level: 'level-colapsado', label: 'Colapsado', emoji: '🔴', key: 'colapsado' };
 }
 
+function getVagueRange(m) {
+    if (m === null || isNaN(m)) return '--';
+    if (m < 30) return 'Menos de 30min';
+    if (m <= 60) return 'Entre 30 a 60 Minutos';
+    if (m <= 120) return 'Entre 1 a 2 Hs';
+    return 'Más de 2 Hs';
+}
+
+
 
 function updateTrafficSummary(mI, mV) {
     const summary = document.getElementById('traffic-summary');
@@ -279,18 +288,28 @@ function updateTrafficSummary(mI, mV) {
 
     // The digital-board lanes use direction labels "A Encarnación" / "A Posadas"
     if (tsIda) {
-        tsIda.textContent = `A Encarnación ${mI} min`;
+        tsIda.textContent = `A Encarnación: ${getVagueRange(mI)}`;
         tsIda.className = 'ts-item' + (levelIda.level ? ' ' + levelIda.level : '');
     }
     if (tsVuelta) {
-        tsVuelta.textContent = `A Posadas ${mV} min`;
+        tsVuelta.textContent = `A Posadas: ${getVagueRange(mV)}`;
         tsVuelta.className = 'ts-item' + (levelVuelta.level ? ' ' + levelVuelta.level : '');
     }
 
-    const worstInfo = getCongestionLevel(Math.max(mI, mV));
+    const maxMins = Math.max(mI, mV);
+    const worstInfo = getCongestionLevel(maxMins);
     const worstEl = document.getElementById('ts-worst');
-    worstEl.textContent = `Estado: ${worstInfo.label}`;
-    worstEl.className = 'ts-worst ' + worstInfo.level;
+    const showWorstIda = (mI <= 60);
+    const showWorstVuelta = (mV <= 120);
+    const showWorst = (maxMins === mI) ? showWorstIda : showWorstVuelta;
+
+    if (showWorst) {
+        worstEl.textContent = `Est.: ${maxMins} min`;
+        worstEl.hidden = false;
+    } else {
+        worstEl.textContent = '';
+        worstEl.hidden = true;
+    }
 }
 
 function setLaneBackground(laneEl, levelKey, imageMap) {
@@ -320,11 +339,11 @@ function renderTrafficSuccess(data) {
     const mI = extractMinutes(data.ida_encarnacion);
     const mV = extractMinutes(data.vuelta_posadas);
 
-    // Update wait times in the digital board
+    // Update wait times in the digital board (vague range)
     const valIda = document.getElementById('board-time-ida');
     const valVuelta = document.getElementById('board-time-vuelta');
-    if (valIda) valIda.textContent = (mI !== null && !isNaN(mI)) ? mI : '--';
-    if (valVuelta) valVuelta.textContent = (mV !== null && !isNaN(mV)) ? mV : '--';
+    if (valIda) valIda.textContent = getVagueRange(mI);
+    if (valVuelta) valVuelta.textContent = getVagueRange(mV);
 
     // Update congestion levels on lanes
     const laneIda = document.getElementById('board-lane-ida');
@@ -335,11 +354,27 @@ function renderTrafficSuccess(data) {
     if (laneIda) laneIda.className = 'board-lane' + (levelIda.level ? ' ' + levelIda.level : '');
     if (laneVuelta) laneVuelta.className = 'board-lane' + (levelVuelta.level ? ' ' + levelVuelta.level : '');
 
-    // Update lane statuses
+    // Update lane statuses (Estimated time in minutes)
     const statusIda = document.getElementById('board-status-ida');
     const statusVuelta = document.getElementById('board-status-vuelta');
-    if (statusIda) statusIda.textContent = levelIda.label || 'DESCONOCIDO';
-    if (statusVuelta) statusVuelta.textContent = levelVuelta.label || 'DESCONOCIDO';
+    if (statusIda) {
+        if (mI !== null && !isNaN(mI) && mI <= 60) {
+            statusIda.textContent = `Est.: ${mI} min`;
+            statusIda.hidden = false;
+        } else {
+            statusIda.textContent = '';
+            statusIda.hidden = true;
+        }
+    }
+    if (statusVuelta) {
+        if (mV !== null && !isNaN(mV) && mV <= 120) {
+            statusVuelta.textContent = `Est.: ${mV} min`;
+            statusVuelta.hidden = false;
+        } else {
+            statusVuelta.textContent = '';
+            statusVuelta.hidden = true;
+        }
+    }
 
     updateBridgeImage(mI, mV);
     updateTrafficSummary(mI, mV);
@@ -356,7 +391,7 @@ function renderTrafficSuccess(data) {
         deltaVuelta = ` (${diff > 0 ? '+' : ''}${diff} MIN)`;
     }
 
-    tickerData.traffic = `🚗 TRÁNSITO EN VIVO: A ENCARNACIÓN ${mI !== null ? mI : '--'} MIN - ${levelIda.label || 'S/D'}${deltaIda} • A POSADAS ${mV !== null ? mV : '--'} MIN - ${levelVuelta.label || 'S/D'}${deltaVuelta}`;
+    tickerData.traffic = `🚗 TRÁNSITO EN VIVO: A ENCARNACIÓN: ${getVagueRange(mI).toUpperCase()} (EST.: ${mI !== null ? mI : '--'} MIN)${deltaIda} • A POSADAS: ${getVagueRange(mV).toUpperCase()} (EST.: ${mV !== null ? mV : '--'} MIN)${deltaVuelta}`;
     renderTicker();
 
     prevMIda = mI;

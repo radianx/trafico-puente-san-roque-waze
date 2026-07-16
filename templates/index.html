@@ -167,10 +167,9 @@
                                         {% if ida_encarnacion_raw is not none %}{{ ida_encarnacion_raw }}{% else %}<span
                                             class="skeleton"></span>{% endif %}
                                     </span>
-                                    <span class="lane-time-unit">MIN</span>
                                 </div>
                                 <div class="lane-status-wrap">
-                                    <span class="lane-status" id="board-status-ida">{{ status_ida }}</span>
+                                    <span class="lane-status" id="board-status-ida"{% if not status_ida %} hidden{% endif %}>{{ status_ida }}</span>
                                 </div>
                             </div>
 
@@ -186,10 +185,9 @@
                                         {% if vuelta_posadas_raw is not none %}{{ vuelta_posadas_raw }}{% else %}<span
                                             class="skeleton"></span>{% endif %}
                                     </span>
-                                    <span class="lane-time-unit">MIN</span>
                                 </div>
                                 <div class="lane-status-wrap">
-                                    <span class="lane-status" id="board-status-vuelta">{{ status_vuelta }}</span>
+                                    <span class="lane-status" id="board-status-vuelta"{% if not status_vuelta %} hidden{% endif %}>{{ status_vuelta }}</span>
                                 </div>
                             </div>
                         </div>
