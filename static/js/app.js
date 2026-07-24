@@ -26,6 +26,7 @@ const WMO = {
 };
 const DAY_NAMES = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
 const STALE_MINUTES = 15;
+const REFRESH_BTN_MINUTES = 5;
 const NORMAL_RANGE = '25–45 min';
 const TAB_LABELS = { trafico: 'Tráfico', alertas: 'Alertas', clima: 'Clima', info: 'Info' };
 const congestionOrder = ['agil', 'moderado', 'cargado', 'colapsado'];
@@ -404,6 +405,26 @@ function setStaleWarning(isoString) {
     staleEl.hidden = minutesSince(isoString) < STALE_MINUTES;
 }
 
+function updateRefreshButton(isoString) {
+    const ts = isoString ?? lastTrafficData?.timestamp;
+    const show = !!ts && minutesSince(ts) >= REFRESH_BTN_MINUTES;
+    document.getElementById('refresh-row').hidden = !show;
+}
+
+function tickTrafficStaleUI() {
+    const ts = lastTrafficData?.timestamp;
+    if (!ts) return;
+
+    setStaleWarning(ts);
+    updateRefreshButton(ts);
+
+    const statusDot = document.getElementById('status-dot');
+    if (statusDot.classList.contains('success')) {
+        document.getElementById('last-update').textContent =
+            'Actualizado: ' + formatRelativeTime(ts);
+    }
+}
+
 function setTrafficUIState({ dotClass, statusText, lastUpdateText, showRetry, errorMsg }) {
     document.getElementById('status-dot').className = 'status-dot ' + dotClass;
     document.getElementById('status-text').textContent = statusText;
@@ -441,6 +462,7 @@ async function fetchTrafficData(manual = false) {
                 showRetry: false
             });
             document.getElementById('stale-warning').hidden = true;
+            updateRefreshButton(null);
         } else if (data.status === 'success') {
             renderTrafficSuccess(data);
             setTrafficUIState({
@@ -449,7 +471,7 @@ async function fetchTrafficData(manual = false) {
                 lastUpdateText: 'Actualizado: ' + formatRelativeTime(data.timestamp),
                 showRetry: false
             });
-            setStaleWarning(data.timestamp);
+            tickTrafficStaleUI();
             if (manual) showToast('Tráfico actualizado', 'success', 2500);
         } else {
             setTrafficUIState({
@@ -460,6 +482,7 @@ async function fetchTrafficData(manual = false) {
                 errorMsg: data.error_message || 'No se pudo obtener la información del puente.'
             });
             showToast('Error al obtener tráfico', 'error');
+            tickTrafficStaleUI();
         }
     } catch (e) {
         console.error('Fetch error:', e);
@@ -472,6 +495,7 @@ async function fetchTrafficData(manual = false) {
             showRetry: true,
             errorMsg: e.message || 'No pudimos conectar con el servidor. Comprobá tu red e intentá de nuevo.'
         });
+        tickTrafficStaleUI();
         showToast('Sin conexión al servidor', 'error');
     } finally {
         refreshBtn.disabled = false;
@@ -484,6 +508,7 @@ document.getElementById('btn-retry').addEventListener('click', () => fetchTraffi
 
 fetchTrafficData();
 setInterval(() => fetchTrafficData(), 30000);
+setInterval(tickTrafficStaleUI, 30000);
 
 // === Share (solo URL; preview con imagen vía Open Graph en el servidor) ===
 function getShareUrl() {
